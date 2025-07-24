@@ -1,0 +1,12 @@
+# Node.js
+node_modules/
+.env
+
+# Vite / Vue
+dist/
+
+# Logs
+*.log
+
+# Mac
+.DS_Store
