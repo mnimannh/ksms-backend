@@ -1,0 +1,14 @@
+-- KSMS Database Schema
+
+CREATE DATABASE IF NOT EXISTS ksms;
+USE ksms;
+
+CREATE TABLE IF NOT EXISTS user (
+    userID INT NOT NULL AUTO_INCREMENT,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    fullName VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    role ENUM('admin', 'student') NOT NULL DEFAULT 'student',
+    PRIMARY KEY (userID)
+);
