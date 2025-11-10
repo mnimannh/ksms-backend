@@ -1,6 +1,7 @@
 import db from '../db/connection.js';
 
-export const login = (email, password, callback) => {
+export const login = async (email, password) => {
   const query = 'SELECT userID, email, role FROM user WHERE email = ? AND password = ?';
-  db.query(query, [email, password], callback);
+  const [rows] = await db.query(query, [email, password]);
+  return rows; // returns an array
 };

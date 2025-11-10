@@ -1,10 +1,6 @@
 import db from '../db/connection.js';
 
-export const getUsersFromDB = () => {
-  return new Promise((resolve, reject) => {
-    db.query('SELECT * FROM user', (err, results) => {
-      if (err) reject(err);
-      else resolve(results);
-    });
-  });
+export const fetchAllUsers = async () => {
+  const [rows] = await db.query('SELECT * FROM user');
+  return rows; // returns array of users
 };

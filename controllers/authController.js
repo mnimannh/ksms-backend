@@ -6,16 +6,19 @@ dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
 
 // Login user
-export const loginUser = (req, res) => {
+export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required' });
   }
 
-  login(email, password, (err, results) => {
-    if (err) return res.status(500).json({ message: 'Server error', error: err.message });
-    if (results.length === 0) return res.status(401).json({ message: 'Invalid credentials' });
+  try {
+    const results = await login(email, password);
+
+    if (results.length === 0) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
     const user = results[0];
 
@@ -31,7 +34,9 @@ export const loginUser = (req, res) => {
       token,
       role: user.role
     });
-  });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 };
 
 // Check session
