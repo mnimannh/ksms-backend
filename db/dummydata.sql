@@ -1,67 +1,93 @@
 USE ksms;
 
--- ===============================
+-- ========================================
 -- 1. Users
--- ===============================
-INSERT INTO user (email, fullName, password, role) VALUES
-('admin@example.com', 'Admin User', 'adminpass123', 'admin'),
-('staff1@example.com', 'Staff One', 'staffpass123', 'staff'),
-('staff2@example.com', 'Staff Two', 'staffpass123', 'staff');
+-- ========================================
+INSERT INTO user (email, fullName, password, role)
+VALUES
+('admin@ksms.com', 'Alice Admin', 'password123', 'admin'),
+('staff1@ksms.com', 'Bob Staff', 'password123', 'staff'),
+('staff2@ksms.com', 'Charlie Staff', 'password123', 'staff'),
+('staff3@ksms.com', 'Diana Staff', 'password123', 'staff');
 
--- ===============================
+-- ========================================
 -- 2. Categories
--- ===============================
-INSERT INTO categories (name) VALUES
-('Beverages'),
-('Snacks'),
+-- ========================================
+INSERT INTO categories (name)
+VALUES
+('Electronics'),
+('Office Supplies'),
+('Furniture'),
 ('Stationery');
 
--- ===============================
--- 3. Inventory (Products)
--- ===============================
-INSERT INTO inventory (inventoryName, category_id, description, default_threshold) VALUES
-('Coca-Cola', 1, 'Refreshing soda drink', 10),
-('Pepsi', 1, 'Popular cola beverage', 10),
-('Potato Chips', 2, 'Crispy salted snack', 15),
-('Notebook', 3, 'A4 size lined notebook', 20);
+-- ========================================
+-- 3. Inventory
+-- ========================================
+INSERT INTO inventory (inventoryName, category_id, description, default_threshold)
+VALUES
+('Laptop', 1, 'High performance laptop', 5),
+('Office Chair', 3, 'Ergonomic chair for office', 10),
+('Printer Paper', 2, 'A4 size printer paper', 50),
+('Pen Pack', 4, 'Set of 10 ballpoint pens', 20);
 
--- ===============================
+-- ========================================
 -- 4. Variants
--- ===============================
-INSERT INTO variants (inventory_id, variant_name, quantity, price, barcode) VALUES
--- Coca-Cola variants
-(1, '500ml Can', 50, 1.50, 'COKE500ML001'),
-(1, '330ml Bottle', 30, 1.20, 'COKE330ML002'),
+-- ========================================
+INSERT INTO variants (inventory_id, variant_name, quantity, price, barcode)
+VALUES
+(1, 'Laptop i5 16GB', 10, 1200.00, 'LP-i5-001'),
+(1, 'Laptop i7 32GB', 5, 1800.00, 'LP-i7-002'),
+(2, 'Chair Black', 15, 150.00, 'CH-BLK-001'),
+(2, 'Chair Grey', 10, 160.00, 'CH-GRY-002'),
+(3, 'Paper 500pcs', 100, 25.00, 'PR-500-001'),
+(4, 'Pen Blue', 200, 5.00, 'PN-BLU-001'),
+(4, 'Pen Black', 150, 5.00, 'PN-BLK-002');
 
--- Pepsi variants
-(2, '500ml Can', 40, 1.40, 'PEPSI500ML001'),
-(2, '330ml Bottle', 25, 1.10, 'PEPSI330ML002'),
-
--- Potato Chips variants
-(3, 'Classic 50g', 100, 2.00, 'CHIPS50G001'),
-(3, 'Barbecue 50g', 80, 2.20, 'CHIPS50G002'),
-
--- Notebook variants
-(4, 'A4 Lined', 200, 3.50, 'NOTEBOOKA4L001'),
-(4, 'A5 Lined', 150, 2.50, 'NOTEBOOKA5L002');
-
--- ===============================
+-- ========================================
 -- 5. Product Images
--- ===============================
-INSERT INTO product_images (variant_id, image_url) VALUES
-(1, 'https://example.com/images/coke_500ml.jpg'),
-(2, 'https://example.com/images/coke_330ml.jpg'),
-(3, 'https://example.com/images/pepsi_500ml.jpg'),
-(4, 'https://example.com/images/pepsi_330ml.jpg'),
-(5, 'https://example.com/images/chips_classic.jpg'),
-(6, 'https://example.com/images/chips_bbq.jpg'),
-(7, 'https://example.com/images/notebook_a4.jpg'),
-(8, 'https://example.com/images/notebook_a5.jpg');
+-- ========================================
+INSERT INTO product_images (variant_id, image_url)
+VALUES
+(1, 'https://dummyimage.com/300x300/000/fff&text=Laptop+i5'),
+(2, 'https://dummyimage.com/300x300/000/fff&text=Laptop+i7'),
+(3, 'https://dummyimage.com/300x300/000/fff&text=Chair+Black'),
+(4, 'https://dummyimage.com/300x300/000/fff&text=Chair+Grey'),
+(5, 'https://dummyimage.com/300x300/000/fff&text=Paper+500pcs'),
+(6, 'https://dummyimage.com/300x300/000/fff&text=Pen+Blue'),
+(7, 'https://dummyimage.com/300x300/000/fff&text=Pen+Black');
 
--- ===============================
+-- ========================================
 -- 6. Low Stock Alerts
--- ===============================
-INSERT INTO low_stock_alerts (variant_id, threshold, is_read) VALUES
-(2, 5, 0),  -- Coca-Cola 330ml low stock
-(4, 5, 0),  -- Pepsi 330ml low stock
-(6, 10, 0); -- Potato Chips Barbecue low stock
+-- ========================================
+INSERT INTO low_stock_alerts (variant_id, threshold, is_read)
+VALUES
+(2, 5, 0),
+(4, 10, 0),
+(7, 20, 0);
+
+-- ========================================
+-- 7. Shift Assignments
+-- ========================================
+INSERT INTO shift_assignment (userID, assignedBy, startTime, endTime, shiftType, notes)
+VALUES
+(2, 1, '2026-01-25 08:00:00', '2026-01-25 16:00:00', 'Morning', 'Front desk'),
+(3, 1, '2026-01-25 14:00:00', '2026-01-25 22:00:00', 'Evening', 'Inventory check'),
+(4, 1, '2026-01-25 08:00:00', '2026-01-25 16:00:00', 'Morning', 'Office support');
+
+-- ========================================
+-- 8. Shift Attendance Log
+-- ========================================
+INSERT INTO shift_attendance_log (shiftID, userID, checkIn, checkOut, status, notes)
+VALUES
+(1, 2, '2026-01-25 08:05:00', '2026-01-25 16:00:00', 'Completed', ''),
+(2, 3, '2026-01-25 14:00:00', '2026-01-25 22:15:00', 'Late', 'Traffic delay'),
+(3, 4, NULL, NULL, 'Missed', 'Sick leave');
+
+-- ========================================
+-- 9. Payroll
+-- ========================================
+INSERT INTO payroll (userID, month, hoursWorked, createdBy, isCreated, isReceived, notes)
+VALUES
+(2, '2026-01-01', 160.00, 1, TRUE, FALSE, 'January payroll'),
+(3, '2026-01-01', 150.50, 1, TRUE, FALSE, 'January payroll'),
+(4, '2026-01-01', 120.75, 1, TRUE, FALSE, 'January payroll');

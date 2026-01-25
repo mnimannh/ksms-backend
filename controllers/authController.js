@@ -3,8 +3,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey123';
-
+const JWT_SECRET = process.env.JWT_SECRET;
 // Login user
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
@@ -24,7 +23,7 @@ export const loginUser = async (req, res) => {
 
     // Create JWT
     const token = jwt.sign(
-      { userID: user.userID, email: user.email, role: user.role },
+      { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -32,7 +31,8 @@ export const loginUser = async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      role: user.role
+      role: user.role,
+      last_login: user.last_login // include last login for frontend
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
