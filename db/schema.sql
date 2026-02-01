@@ -104,17 +104,47 @@ CREATE TABLE shift_attendance_log (
 
 CREATE TABLE payroll (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    userID INT NOT NULL,               -- Employee
-    month DATE NOT NULL,               -- Store first day of the month, e.g., '2026-01-01'
-    hoursWorked DECIMAL(5,2) NOT NULL, -- Total hours worked in the month
-    createdBy INT NOT NULL,            -- Admin who created the payroll
-    isCreated BOOLEAN DEFAULT FALSE,   -- Payroll generated flag
-    isReceived BOOLEAN DEFAULT FALSE,  -- Payroll paid flag
+    userID INT NOT NULL,            
+    month DATE NOT NULL,               
+    hoursWorked DECIMAL(5,2) NOT NULL, 
+    createdBy INT NOT NULL,          
+    isCreated BOOLEAN DEFAULT FALSE,   
+    isReceived BOOLEAN DEFAULT FALSE,  
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES user(id),
     FOREIGN KEY (createdBy) REFERENCES user(id),
-    UNIQUE KEY (userID, month)         -- Ensure one payroll record per user per month
+    UNIQUE KEY (userID, month)        
 );
 
+CREATE TABLE rfid_cards (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userID INT NOT NULL,
+    rfid_uid VARCHAR(50) NOT NULL UNIQUE,   -- UID from RC522
+    card_name VARCHAR(50),                  -- Optional label
+    is_active BOOLEAN DEFAULT TRUE,
+    assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userID) REFERENCES user(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE load_cells (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    variant_id INT NOT NULL,
+    sensor_uid VARCHAR(50) NOT NULL UNIQUE,   -- ESP32 / HX711 ID
+    calibration_factor DECIMAL(10,4) NOT NULL,
+    empty_weight DECIMAL(10,2) NOT NULL,      -- Container weight
+    unit_weight DECIMAL(10,2) NOT NULL,       -- Weight per item
+    is_active BOOLEAN DEFAULT TRUE,
+    installed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (variant_id) REFERENCES variants(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE load_cell_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    load_cell_id INT NOT NULL,
+    weight DECIMAL(10,2) NOT NULL,
+    calculated_quantity INT NOT NULL,
+    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (load_cell_id) REFERENCES load_cells(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
