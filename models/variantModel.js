@@ -40,3 +40,22 @@ export const updateVariant = async (id, data) => {
 export const deleteVariant = async (id) => {
   await db.query('DELETE FROM variants WHERE id = ?', [id]);
 };
+
+// New function specifically for the POS screen
+export const getVariantsForPOS = async () => {
+  const [rows] = await db.query(`
+    SELECT 
+        v.id, 
+        v.variant_name, 
+        v.price, 
+        v.quantity, 
+        i.inventoryName, 
+        i.category_id,
+        MIN(img.image_url) AS image_url
+    FROM variants v
+    JOIN inventory i ON v.inventory_id = i.id
+    LEFT JOIN product_images img ON v.id = img.variant_id
+    GROUP BY v.id, v.variant_name, v.price, v.quantity, i.inventoryName, i.category_id
+  `);
+  return rows;
+};

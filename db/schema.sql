@@ -148,3 +148,23 @@ CREATE TABLE load_cell_logs (
     recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (load_cell_id) REFERENCES load_cells(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- ===============================
+-- 1️⃣ Orders table
+-- ===============================
+CREATE TABLE IF NOT EXISTS orders (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ===============================
+--  Order items table
+-- ===============================
+CREATE TABLE IF NOT EXISTS order_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL,
+  variant_id INT NOT NULL,
+  quantity INT NOT NULL,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  FOREIGN KEY (variant_id) REFERENCES variants(id)
+);
