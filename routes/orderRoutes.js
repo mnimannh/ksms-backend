@@ -1,41 +1,16 @@
 // routes/orderRoutes.js
 import express from 'express';
-import db from '../db/connection.js';
-import { deductStock } from '../models/orderModel.js'; // POS-specific model
+import { createOrder, getOrder, getVariantsForPOS } from '../controllers/orderController.js';
 
 const router = express.Router();
 
 // POST /api/orders
-router.post('/', async (req, res) => {
-  const { items } = req.body; // [{ id, quantity }]
-  const conn = await db.getConnection();
-  await conn.beginTransaction();
+router.post('/', createOrder);
 
-  try {
-    // 1️⃣ Create a new order
-    const [order] = await conn.query('INSERT INTO orders (created_at) VALUES (NOW())');
-    const orderId = order.insertId;
+// GET /api/orders/:id
+router.get('/:id', getOrder);
 
-    // 2️⃣ Insert order_items + deduct stock atomically
-    for (const item of items) {
-      await deductStock(item.id, item.quantity, conn);
-
-      await conn.query(
-        'INSERT INTO order_items (order_id, variant_id, quantity) VALUES (?, ?, ?)',
-        [orderId, item.id, item.quantity]
-      );
-    }
-
-    await conn.commit();
-    res.json({ id: orderId });
-
-  } catch (err) {
-    await conn.rollback();
-    console.error(err);
-    res.status(400).json({ message: err.message });
-  } finally {
-    conn.release();
-  }
-});
+// GET /api/variants (POS)
+router.get('/variants', getVariantsForPOS);
 
 export default router;

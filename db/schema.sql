@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS variants (
     quantity INT DEFAULT 0,
     price DECIMAL(10,2) NOT NULL,
     barcode VARCHAR(50) UNIQUE NOT NULL,
+    threshold INT DEFAULT 10,
     lastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_variants_inventory FOREIGN KEY (inventory_id)
         REFERENCES inventory(id) ON DELETE CASCADE
@@ -56,7 +57,9 @@ CREATE TABLE IF NOT EXISTS variants (
 CREATE TABLE IF NOT EXISTS product_images (
     id INT AUTO_INCREMENT PRIMARY KEY,
     variant_id INT NOT NULL,
-    image_url VARCHAR(255),
+    image_url VARCHAR(255) NOT NULL,
+    is_main TINYINT(1) DEFAULT 0,       
+    image_order TINYINT UNSIGNED,        
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_images_variant FOREIGN KEY (variant_id)
@@ -67,7 +70,6 @@ CREATE TABLE IF NOT EXISTS product_images (
 CREATE TABLE IF NOT EXISTS low_stock_alerts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     variant_id INT NOT NULL,
-    threshold INT NOT NULL,
     is_read TINYINT(1) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_alerts_variant FOREIGN KEY (variant_id)

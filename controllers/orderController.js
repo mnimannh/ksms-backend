@@ -12,27 +12,45 @@ export const createOrder = async (req, res) => {
   await conn.beginTransaction();
 
   try {
-    // 1️⃣ Insert new order
+    // 1️⃣ Create a new order
     const [order] = await conn.query('INSERT INTO orders (created_at) VALUES (NOW())');
     const orderId = order.insertId;
 
     // 2️⃣ Loop through items to insert order_items + deduct stock
     for (const item of items) {
+      // Deduct stock atomically
       await orderModel.deductStock(item.id, item.quantity, conn);
 
+      // Insert into order_items
       await conn.query(
         'INSERT INTO order_items (order_id, variant_id, quantity) VALUES (?, ?, ?)',
         [orderId, item.id, item.quantity]
       );
+
+      // ✅ Check variant quantity vs threshold
+      const [variantRows] = await conn.query(
+        'SELECT quantity, threshold FROM variants WHERE id = ?',
+        [item.id]
+      );
+      const variant = variantRows[0];
+
+      if (variant.quantity < variant.threshold) {
+        // Insert low stock alert if not already exists (is_read = 0)
+        await conn.query(
+          `INSERT IGNORE INTO low_stock_alerts (variant_id) VALUES (?)`,
+          [item.id]
+        );
+      }
     }
 
     // 3️⃣ Commit transaction
     await conn.commit();
-    res.status(201).json({ message: 'Order created', id: orderId });
+
+    res.status(201).json({ message: 'Order created successfully', id: orderId });
 
   } catch (err) {
     await conn.rollback();
-    console.error(err);
+    console.error('Order creation failed:', err);
     res.status(400).json({ message: err.message });
   } finally {
     conn.release();

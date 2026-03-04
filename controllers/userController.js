@@ -63,25 +63,3 @@ export const removeUser = async (req, res) => {
   }
 };
 
-// GET /api/user/me
-export const getCurrentUser = async (req, res) => {
-  try {
-    // req.user is set by authMiddleware
-    const user = await userModel.getUserById(req.user.id);
-
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Return only necessary info
-    res.json({
-      id: user.id,
-      fullName: user.fullName,   // match your frontend
-      email: user.email,
-      role: user.role,
-      status: user.status,
-      last_login: user.last_login
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};

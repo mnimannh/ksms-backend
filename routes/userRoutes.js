@@ -1,12 +1,10 @@
 import express from 'express';
-import authMiddleware from '../middleware/auth.js';
 import {
   getUsers,
   getUser,
   addUser,
   editUser,
-  removeUser,
-  getCurrentUser 
+  removeUser 
 } from '../controllers/userController.js';
 
 const router = express.Router();
@@ -16,8 +14,5 @@ router.get('/:id', getUser);
 router.post('/', addUser);
 router.put('/:id', editUser);
 router.delete('/:id', removeUser);
-
-// Current logged-in user
-router.get('/me', authMiddleware, getCurrentUser);
 
 export default router;

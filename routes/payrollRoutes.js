@@ -13,12 +13,18 @@ import {
 
 const router = express.Router();
 
-router.get('/', getPayrolls);                 // Get all payrolls
-router.get('/:id', getPayroll);              // Get payroll by ID
-router.get('/user/:userID', getPayrollByUser); // Get all payroll for a user
-router.post('/', createPayrollRecord);       // Create payroll
-router.put('/:id', updatePayrollRecord);     // Update payroll
-router.delete('/:id', deletePayrollRecord);  // Delete payroll
+// ✅ specific routes FIRST
 router.get('/my-records', authMiddleware, payrollController.getMyPayroll);
+router.get('/user/:userID', getPayrollByUser);
+
+// ✅ general route
+router.get('/', getPayrolls);
+
+// ❗ dynamic LAST
+router.get('/:id', getPayroll);
+
+router.post('/', createPayrollRecord);
+router.put('/:id', updatePayrollRecord);
+router.delete('/:id', deletePayrollRecord);
 
 export default router;
