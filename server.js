@@ -2,7 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 
-import authRoutes from './routes/auth.js';
+import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js'; 
 import categoryRoutes from './routes/categoryRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';

@@ -1,5 +1,6 @@
 // authController.js
 import { login } from '../models/authModel.js';
+import * as userModel from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -18,7 +19,7 @@ export const loginUser = async (req, res) => {
     const result = await login(email, password);
 
     if (!result.success) {
-      // 🔹 Proper handling for inactive user or wrong credentials
+      // Proper handling for inactive user or wrong credentials
       // 400 = inactive / validation issue, 401 = wrong password/email
       const statusCode = result.message.includes('inactive') ? 400 : 401;
       return res.status(statusCode).json({ message: result.message });
@@ -36,6 +37,7 @@ export const loginUser = async (req, res) => {
     res.json({
       message: 'Login successful',
       token,
+      fullName: user.fullName, 
       role: user.role,
       last_login: user.last_login
     });
@@ -58,4 +60,27 @@ export const checkSession = (req, res) => {
 
     res.json({ message: 'Session valid', user: decoded });
   });
+};
+
+// GET /api/user/me
+export const getCurrentUser = async (req, res) => {
+  try {
+    // req.user is set by authMiddleware
+    const user = await userModel.getUserById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Return only necessary info
+    res.json({
+      id: user.id,
+      fullName: user.fullName,   
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      last_login: user.last_login
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
 };

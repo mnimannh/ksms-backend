@@ -1,5 +1,7 @@
 // middleware/auth.js
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -8,10 +10,20 @@ const authMiddleware = (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, 'YOUR_SECRET_KEY'); // same secret used in login
-    req.user = { id: decoded.id, role: decoded.role }; // now backend knows the logged-in user
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Attach user info to request
+    req.user = { 
+      id: decoded.id, 
+      role: decoded.role,
+      email: decoded.email // optional, useful in controllers
+    };
+
     next();
   } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expired' });
+    }
     res.status(401).json({ message: 'Invalid token' });
   }
 };
