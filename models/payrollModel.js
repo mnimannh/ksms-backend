@@ -42,3 +42,16 @@ export const updatePayroll = async (id, data) => {
 export const deletePayroll = async (id) => {
   await db.query('DELETE FROM payroll WHERE id = ?', [id]);
 };
+
+// Fetch payroll records for a specific user with fullName
+export const getPayrollWithUser = async (userID) => {
+  const [rows] = await db.query(
+    `SELECT p.*, u.fullName
+     FROM payroll p
+     JOIN user u ON p.userID = u.id
+     WHERE p.userID = ?
+     ORDER BY p.month DESC`,
+    [userID]
+  );
+  return rows;
+};

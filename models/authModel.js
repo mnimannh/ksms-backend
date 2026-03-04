@@ -3,32 +3,36 @@ import bcrypt from 'bcrypt';
 
 export const login = async (email, password) => {
   // 1. Get user record by email
-  const [rows] = await db.query('SELECT id, email, password, role, last_login FROM user WHERE email = ?', [email]);
+  const [rows] = await db.query(
+    'SELECT id, email, password, role, last_login, status FROM user WHERE email = ?',
+    [email]
+  );
 
   if (rows.length === 0) {
-    // User not found
-    return [];
+    return { success: false, message: 'Invalid email or password' };
   }
 
   const user = rows[0];
 
-  // 2. Compare submitted password with hashed password
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    // Password does not match
-    return [];
+  // Check if user is active
+  if (user.status !== 'active') {
+    return { success: false, message: 'Your account is inactive. Contact admin.' };
   }
 
-  const userId = user.id;
+  // 2. Compare password
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return { success: false, message: 'Invalid email or password' };
+  }
 
-  // 3. Update last_login to current time
-  await db.query('UPDATE user SET last_login = NOW() WHERE id = ?', [userId]);
+  // 3. Update last_login
+  await db.query('UPDATE user SET last_login = NOW() WHERE id = ?', [user.id]);
 
-  // 4. Return updated user info including last_login (excluding password)
+  // 4. Return user info (without password)
   const [updatedRows] = await db.query(
-    'SELECT id, email, role, last_login FROM user WHERE id = ?',
-    [userId]
+    'SELECT id, email, role, last_login, status FROM user WHERE id = ?',
+    [user.id]
   );
 
-  return updatedRows;
+  return { success: true, user: updatedRows[0] };
 };

@@ -61,3 +61,15 @@ export const deletePayrollRecord = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+// GET current logged-in user's payroll with fullName
+export const getMyPayroll = async (req, res) => {
+  try {
+    const userID = req.user.id; // requires auth middleware
+    const payrolls = await payrollModel.getPayrollWithUser(userID);
+    res.json(payrolls);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};

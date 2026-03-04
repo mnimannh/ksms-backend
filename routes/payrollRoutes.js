@@ -1,5 +1,7 @@
 // routes/payrollRoutes.js
+import * as payrollController from '../controllers/payrollController.js';
 import express from 'express';
+import authMiddleware from '../middleware/auth.js';
 import {
   getPayrolls,
   getPayroll,
@@ -17,5 +19,6 @@ router.get('/user/:userID', getPayrollByUser); // Get all payroll for a user
 router.post('/', createPayrollRecord);       // Create payroll
 router.put('/:id', updatePayrollRecord);     // Update payroll
 router.delete('/:id', deletePayrollRecord);  // Delete payroll
+router.get('/my-records', authMiddleware, payrollController.getMyPayroll);
 
 export default router;

@@ -1,10 +1,12 @@
+// authController.js
 import { login } from '../models/authModel.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
-// Login user
+
+// POST /auth/login
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -13,15 +15,18 @@ export const loginUser = async (req, res) => {
   }
 
   try {
-    const results = await login(email, password);
+    const result = await login(email, password);
 
-    if (results.length === 0) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    if (!result.success) {
+      // 🔹 Proper handling for inactive user or wrong credentials
+      // 400 = inactive / validation issue, 401 = wrong password/email
+      const statusCode = result.message.includes('inactive') ? 400 : 401;
+      return res.status(statusCode).json({ message: result.message });
     }
 
-    const user = results[0];
+    const user = result.user;
 
-    // Create JWT
+    // Create JWT for active users
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       JWT_SECRET,
@@ -32,14 +37,16 @@ export const loginUser = async (req, res) => {
       message: 'Login successful',
       token,
       role: user.role,
-      last_login: user.last_login // include last login for frontend
+      last_login: user.last_login
     });
+
   } catch (err) {
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Check session
+// GET /auth/checkSession
 export const checkSession = (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ message: 'No token provided' });

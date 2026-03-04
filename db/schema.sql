@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS user (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL DEFAULT NULL,
     role ENUM('admin', 'staff') NOT NULL DEFAULT 'staff',
+    status ENUM('active', 'inactive') DEFAULT 'active';
     PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
