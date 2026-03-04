@@ -1,9 +1,63 @@
-import { fetchAllUsers } from '../services/userService.js';
+import * as userModel from '../models/userModel.js';
+import bcrypt from 'bcrypt';
 
-export const getAllUsers = async (req, res) => {
+export const getUsers = async (req, res) => {
   try {
-    const users = await fetchAllUsers();
+    const users = await userModel.getAllUsers();
     res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+export const getUser = async (req, res) => {
+  try {
+    const user = await userModel.getUserById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Add user with hashed password
+export const addUser = async (req, res) => {
+  try {
+    const { password, ...rest } = req.body;
+
+    // Hash password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const id = await userModel.createUser({ ...rest, password: hashedPassword });
+    res.status(201).json({ message: 'User created', id });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Edit user, optionally updating password
+export const editUser = async (req, res) => {
+  try {
+    const { password, ...rest } = req.body;
+    let updatedData = { ...rest };
+
+    if (password && password.trim() !== '') {
+      // Hash new password if provided
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updatedData.password = hashedPassword;
+    }
+
+    await userModel.updateUser(req.params.id, updatedData);
+    res.json({ message: 'User updated' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+export const removeUser = async (req, res) => {
+  try {
+    await userModel.deleteUser(req.params.id);
+    res.json({ message: 'User deleted' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
