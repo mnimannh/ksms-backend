@@ -17,6 +17,18 @@ export const getVariantById = async (id) => {
   return rows[0];
 };
 
+// Fetch variant by barcode
+export const getVariantByBarcode = async (barcode) => {
+  const [rows] = await db.query(
+    'SELECT v.id, v.variant_name, v.price, v.quantity, v.barcode, i.inventoryName, i.category_id ' +
+    'FROM variants v ' +
+    'JOIN inventory i ON v.inventory_id = i.id ' +
+    'WHERE TRIM(v.barcode) = ?',  // trim any extra spaces
+    [barcode.trim()]
+  );
+  return rows[0]; // return single variant
+};
+
 // Create a variant
 export const createVariant = async (data) => {
   const { inventory_id, variant_name, quantity, price, barcode } = data;
@@ -48,14 +60,23 @@ export const getVariantsForPOS = async () => {
         v.id, 
         v.variant_name, 
         v.price, 
-        v.quantity, 
+        v.quantity,
+        v.barcode,
         i.inventoryName, 
         i.category_id,
         MIN(img.image_url) AS image_url
     FROM variants v
     JOIN inventory i ON v.inventory_id = i.id
     LEFT JOIN product_images img ON v.id = img.variant_id
-    GROUP BY v.id, v.variant_name, v.price, v.quantity, i.inventoryName, i.category_id
+    GROUP BY 
+        v.id, 
+        v.variant_name, 
+        v.price, 
+        v.quantity,
+        v.barcode,
+        i.inventoryName, 
+        i.category_id
   `);
+
   return rows;
 };

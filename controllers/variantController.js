@@ -23,6 +23,21 @@ export const getVariant = async (req, res) => {
   }
 };
 
+export const getVariantByBarcodeController = async (req, res) => {
+  try {
+    const barcode = req.params.barcode;
+    const variant = await variantModel.getVariantByBarcode(barcode);
+
+    if (!variant) {
+      return res.status(404).json({ message: 'Variant not found' });
+    }
+
+    res.json(variant);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 // POST create variant
 export const createVariantItem = async (req, res) => {
   try {
@@ -52,4 +67,7 @@ export const deleteVariantItem = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+
+
 

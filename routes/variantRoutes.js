@@ -3,15 +3,17 @@ import express from 'express';
 import {
   getVariants,
   getVariant,
+  getVariantByBarcodeController,
   createVariantItem,
   updateVariantItem,
   deleteVariantItem
-} from '../controllers/variantController.js';
+} from '../controllers/variantController.js'; 
 
 const router = express.Router();
 
 router.get('/', getVariants);
 router.get('/:id', getVariant);
+router.get('/barcode/:barcode', getVariantByBarcodeController);
 router.post('/', createVariantItem);
 router.put('/:id', updateVariantItem);
 router.delete('/:id', deleteVariantItem);
