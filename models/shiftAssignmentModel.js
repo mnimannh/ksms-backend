@@ -4,8 +4,9 @@ import db from '../db/connection.js';
 // Fetch all shifts
 export const getAllShifts = async () => {
   const [rows] = await db.query(`
-    SELECT *
-    FROM shift_assignment
+    SELECT s.*, u.fullName AS assignedByName
+    FROM shift_assignment s
+    LEFT JOIN user u ON s.assignedBy = u.id
   `);
   return rows;
 };
