@@ -65,10 +65,10 @@ export const getVariantsForPOS = async () => {
         i.inventoryName, 
         i.category_id,
         v.inventory_id,
-        MIN(img.image_url) AS image_url
+        MAX(img.image_url) AS image_url
     FROM variants v
     JOIN inventory i ON v.inventory_id = i.id
-    LEFT JOIN product_images img ON v.id = img.variant_id
+    LEFT JOIN product_images img ON v.id = img.variant_id AND img.is_main = 1
     GROUP BY 
         v.id, 
         v.variant_name, 

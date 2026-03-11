@@ -67,3 +67,13 @@ export const deleteVariantItem = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+// GET variants for POS (includes image_url, category_id)
+export const getPosVariants = async (req, res) => {
+  try {
+    const variants = await variantModel.getVariantsForPOS();
+    res.json(variants);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
