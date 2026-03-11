@@ -14,6 +14,7 @@ import payrollRoutes from './routes/payrollRoutes.js';
 import rfidCardRoutes from './routes/rfidCardRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import alarmRoutes from './routes/alarmRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 const app = express();
 
@@ -34,6 +35,8 @@ app.use('/api/payroll', payrollRoutes);
 app.use('/api/rfid-cards', rfidCardRoutes);       
 app.use('/api/orders', orderRoutes);
 app.use('/api/alarm', alarmRoutes);
+app.use('/uploads', express.static('uploads'));
+app.use('/api/upload', uploadRoutes);
 
 // Test route
 app.get('/', (req, res) => res.send('KSMS Backend is running'));

@@ -4,7 +4,7 @@ import db from '../db/connection.js';
 // Fetch all product images with variant info
 export const getAllProductImages = async () => {
   const [rows] = await db.query(`
-    SELECT product_images.id, product_images.image_url, product_images.is_main, product_images.image_order,
+    SELECT product_images.id, product_images.variant_id, product_images.image_url, product_images.is_main, product_images.image_order,
            variants.variant_name, variants.inventory_id
     FROM product_images
     JOIN variants ON product_images.variant_id = variants.id
