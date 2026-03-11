@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS inventory (
 CREATE TABLE IF NOT EXISTS variants (
     id INT AUTO_INCREMENT PRIMARY KEY,
     inventory_id INT NOT NULL,
-    variant_name VARCHAR(50) NOT NULL UNIQUE,
+    variant_name VARCHAR(50) UNIQUE,
     quantity INT DEFAULT 0,
     price DECIMAL(10,2) NOT NULL,
     barcode VARCHAR(50) UNIQUE NOT NULL,
@@ -121,13 +121,14 @@ CREATE TABLE payroll (
     UNIQUE KEY (userID, month)        
 );
 
-CREATE TABLE rfid_cards (
+CREATE TABLE rfid(
     id INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
     rfid_uid VARCHAR(50) NOT NULL UNIQUE,   -- UID from RC522
     card_name VARCHAR(50),                  -- Optional label
     is_active BOOLEAN DEFAULT TRUE,
     assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES user(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

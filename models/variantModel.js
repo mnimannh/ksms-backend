@@ -4,7 +4,7 @@ import db from '../db/connection.js';
 // Fetch all variants
 export const getAllVariants = async () => {
   const [rows] = await db.query(`
-    SELECT v.id, v.variant_name, v.quantity, v.price, v.barcode, v.lastUpdated, i.inventoryName
+    SELECT v.id, v.variant_name, v.quantity, v.price, v.barcode, v.lastUpdated, v.inventory_id, i.inventoryName
     FROM variants v
     JOIN inventory i ON v.inventory_id = i.id
   `);
@@ -64,6 +64,7 @@ export const getVariantsForPOS = async () => {
         v.barcode,
         i.inventoryName, 
         i.category_id,
+        v.inventory_id,
         MIN(img.image_url) AS image_url
     FROM variants v
     JOIN inventory i ON v.inventory_id = i.id
@@ -75,7 +76,8 @@ export const getVariantsForPOS = async () => {
         v.quantity,
         v.barcode,
         i.inventoryName, 
-        i.category_id
+        i.category_id,
+        v.inventory_id
   `);
 
   return rows;

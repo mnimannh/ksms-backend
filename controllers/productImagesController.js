@@ -52,11 +52,22 @@ export const updateProductImage = async (req, res) => {
   }
 };
 
-// DELETE product image
+// DELETE product image by ID
 export const deleteProductImage = async (req, res) => {
   try {
     await productImagesModel.deleteProductImage(req.params.id);
     res.json({ message: 'Product image deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+
+// Add at the bottom of productImagesController.js
+export const deleteImagesByVariant = async (req, res) => {
+  try {
+    await productImagesModel.deleteImagesByVariantId(req.params.variant_id);
+    res.json({ message: 'Images deleted' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

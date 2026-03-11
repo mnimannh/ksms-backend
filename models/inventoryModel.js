@@ -1,10 +1,11 @@
 // models/inventoryModel.js
 import db from '../db/connection.js';
 
+
 // Fetch all inventory items
 export const getAllInventory = async () => {
   const [rows] = await db.query(`
-    SELECT i.id, i.inventoryName, i.description, i.default_threshold, i.lastUpdated, c.name AS category
+    SELECT i.id, i.inventoryName, i.category_id, i.description, i.default_threshold, i.lastUpdated, c.name AS category
     FROM inventory i
     JOIN categories c ON i.category_id = c.id
   `);

@@ -5,7 +5,7 @@ import * as variantModel from '../models/variantModel.js';
 export const getVariants = async (req, res) => {
   try {
     // We use the new joined function to get image_url and category_id
-    const variants = await variantModel.getVariantsForPOS();
+    const variants = await variantModel.getAllVariants();
     res.json(variants);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -67,7 +67,3 @@ export const deleteVariantItem = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
-
-
-
-

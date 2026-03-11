@@ -6,27 +6,18 @@ import {
   getImagesByVariant,
   createProductImage,
   updateProductImage,
-  deleteProductImage
+  deleteProductImage,
+  deleteImagesByVariant,
 } from '../controllers/productImagesController.js';
 
 const router = express.Router();
 
-// Get all product images
-router.get('/', getProductImages);
-
-// Get a single product image by ID
-router.get('/:id', getProductImage);
-
-// Get all images for a specific variant
-router.get('/variant/:variant_id', getImagesByVariant);
-
-// Create a new product image
-router.post('/', createProductImage);
-
-// Update a product image by ID
-router.put('/:id', updateProductImage);
-
-// Delete a product image by ID
-router.delete('/:id', deleteProductImage);
+router.get('/',                          getProductImages);
+router.get('/variant/:variant_id',       getImagesByVariant);      // must be before /:id
+router.get('/:id',                       getProductImage);
+router.post('/',                         createProductImage);
+router.put('/:id',                       updateProductImage);
+router.delete('/variant/:variant_id',    deleteImagesByVariant);   // used by AdminInventory.vue
+router.delete('/:id',                    deleteProductImage);
 
 export default router;
