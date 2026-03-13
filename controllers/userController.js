@@ -20,34 +20,45 @@ export const getUser = async (req, res) => {
   }
 };
 
-// Add user with hashed password
 export const addUser = async (req, res) => {
   try {
-    const { password, ...rest } = req.body;
+    const { password, rfidUid, confirmPassword, ...rest } = req.body;
 
-    // Hash password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const id = await userModel.createUser({ ...rest, password: hashedPassword });
+
+    // Save RFID separately if staff
+    if (rest.role === 'staff' && rfidUid) {
+      await userModel.upsertRfid(id, rfidUid);
+    }
+
     res.status(201).json({ message: 'User created', id });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// Edit user, optionally updating password
 export const editUser = async (req, res) => {
   try {
-    const { password, ...rest } = req.body;
+    const { password, rfidUid, confirmPassword, ...rest } = req.body;
+
+    // Strip rfidUid from user table update
     let updatedData = { ...rest };
 
     if (password && password.trim() !== '') {
-      // Hash new password if provided
-      const hashedPassword = await bcrypt.hash(password, 10);
-      updatedData.password = hashedPassword;
+      updatedData.password = await bcrypt.hash(password, 10);
     }
 
     await userModel.updateUser(req.params.id, updatedData);
+
+    // Handle RFID table separately
+    if (rest.role === 'staff' && rfidUid) {
+      await userModel.upsertRfid(req.params.id, rfidUid);
+    } else if (rest.role !== 'staff') {
+      // Remove RFID if role changed away from staff
+      await userModel.deleteRfidByUser(req.params.id);
+    }
+
     res.json({ message: 'User updated' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
