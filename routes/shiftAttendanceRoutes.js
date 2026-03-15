@@ -6,16 +6,19 @@ import {
   getAttendanceByShift,
   createAttendanceLog,
   updateAttendanceLog,
-  deleteAttendanceLog
+  deleteAttendanceLog,
+  scanRFID,
 } from '../controllers/shiftAttendanceController.js';
 
 const router = express.Router();
 
-// Routes
+// Specific POST routes must come BEFORE generic ones
+router.post('/rfid/scan', scanRFID);   // ESP32 scan endpoint
+
 router.get('/', getAttendanceLogs);
-router.get('/:id', getAttendance);
 router.get('/shift/:shiftID', getAttendanceByShift);
-router.post('/', createAttendanceLog);
+router.get('/:id', getAttendance);
+router.post('/', createAttendanceLog); // generic — after /rfid/scan
 router.put('/:id', updateAttendanceLog);
 router.delete('/:id', deleteAttendanceLog);
 

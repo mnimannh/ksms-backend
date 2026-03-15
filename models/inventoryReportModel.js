@@ -1,5 +1,5 @@
 // models/inventoryReportModel.js
-import db from '../db/connection.js';
+import db from '../db/connection.js'
 
 async function getInventoryReport({ year, month, categoryId = null }) {
   const queryParams = [year, month]
@@ -9,6 +9,9 @@ async function getInventoryReport({ year, month, categoryId = null }) {
     categoryClause = 'AND c.id = ?'
     queryParams.push(categoryId)
   }
+
+  // ── DEBUG: log exactly what params are being sent ─────────────────────────
+  console.log('[InventoryReport] querying with:', { year, month, categoryId, queryParams })
 
   const sql = `
     SELECT
@@ -53,6 +56,14 @@ async function getInventoryReport({ year, month, categoryId = null }) {
   `
 
   const [rows] = await db.query(sql, queryParams)
+
+  // ── DEBUG: log a sample of what came back ─────────────────────────────────
+  console.log('[InventoryReport] rows returned:', rows.length)
+  console.log('[InventoryReport] sample sold values:', rows.slice(0, 3).map(r => ({
+    name: r.product_name,
+    sold: r.sold,
+  })))
+
   return rows
 }
 

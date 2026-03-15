@@ -25,8 +25,7 @@ export const getRFIDCard = async (req, res) => {
 // GET RFID card by UID (used by ESP32 scans)
 export const getRFIDCardByUID = async (req, res) => {
   try {
-    const { uid } = req.params;
-    const card = await rfidModel.getRFIDCardByUID(uid);
+    const card = await rfidModel.getRFIDCardByUID(req.params.uid);
     if (!card) return res.status(404).json({ message: 'RFID card not found or inactive' });
     res.json(card);
   } catch (err) {
@@ -46,17 +45,23 @@ export const createRFIDCard = async (req, res) => {
     const insertId = await rfidModel.createRFIDCard({ userID, rfid_uid, card_name });
     res.status(201).json({ message: 'RFID card created', id: insertId });
   } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'This RFID UID is already registered' });
+    }
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
 
-// PUT update RFID card
+// PUT update RFID card (partial update safe)
 export const updateRFIDCard = async (req, res) => {
   try {
     const { userID, rfid_uid, card_name, is_active } = req.body;
     await rfidModel.updateRFIDCard(req.params.id, { userID, rfid_uid, card_name, is_active });
     res.json({ message: 'RFID card updated' });
   } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'This RFID UID is already registered' });
+    }
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

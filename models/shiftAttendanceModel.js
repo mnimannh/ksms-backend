@@ -24,6 +24,15 @@ export const getAttendanceByShiftId = async (shiftID) => {
   return rows;
 };
 
+// Fetch attendance by shift ID + userID (for double-tap check)
+export const getAttendanceByShiftAndUser = async (shiftID, userID) => {
+  const [rows] = await db.query(
+    'SELECT * FROM shift_attendance_log WHERE shiftID = ? AND userID = ?',
+    [shiftID, userID]
+  );
+  return rows[0];
+};
+
 // Create attendance log
 export const createAttendance = async (data) => {
   const { shiftID, userID, checkIn, checkOut, status, notes } = data;

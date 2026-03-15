@@ -124,8 +124,8 @@ CREATE TABLE payroll (
 CREATE TABLE rfid(
     id INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
-    rfid_uid VARCHAR(50) NOT NULL UNIQUE,   -- UID from RC522
-    card_name VARCHAR(50),                  -- Optional label
+    rfid_uid VARCHAR(50) NOT NULL UNIQUE,   
+    card_name VARCHAR(50),                 
     is_active BOOLEAN DEFAULT TRUE,
     assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
