@@ -20,6 +20,17 @@ export const getShiftById = async (id) => {
   return rows[0];
 };
 
+// Fetch all shifts assigned to a specific staff
+export const getShiftsByUser = async (userID) => {
+  const [rows] = await db.query(`
+    SELECT s.*, u.fullName AS assignedByName
+    FROM shift_assignment s
+    LEFT JOIN user u ON s.assignedBy = u.id
+    WHERE s.userID = ?
+    ORDER BY s.startTime ASC
+  `, [userID]);
+  return rows;
+};
 // Create a new shift
 export const createShift = async (data) => {
   const { userID, assignedBy, startTime, endTime, shiftType, notes } = data;
@@ -41,5 +52,6 @@ export const updateShift = async (id, data) => {
 
 // Delete shift
 export const deleteShift = async (id) => {
+  await db.query('DELETE FROM attendance WHERE shiftID = ?', [id]); 
   await db.query('DELETE FROM shift_assignment WHERE id = ?', [id]);
 };

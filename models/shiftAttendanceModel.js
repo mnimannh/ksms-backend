@@ -1,3 +1,4 @@
+// models/shiftAttendanceModel.js
 import db from '../db/connection.js';
 
 // Fetch all attendance logs
@@ -24,7 +25,7 @@ export const getAttendanceByShiftId = async (shiftID) => {
   return rows;
 };
 
-// Fetch attendance by shift ID + userID (for double-tap check)
+// Fetch attendance by shift ID + userID (double-tap check for scan logic)
 export const getAttendanceByShiftAndUser = async (shiftID, userID) => {
   const [rows] = await db.query(
     'SELECT * FROM shift_attendance_log WHERE shiftID = ? AND userID = ?',
@@ -38,7 +39,7 @@ export const createAttendance = async (data) => {
   const { shiftID, userID, checkIn, checkOut, status, notes } = data;
   const [result] = await db.query(
     'INSERT INTO shift_attendance_log (shiftID, userID, checkIn, checkOut, status, notes) VALUES (?, ?, ?, ?, ?, ?)',
-    [shiftID, userID, checkIn, checkOut, status || 'Pending', notes]
+    [shiftID, userID, checkIn, checkOut ?? null, status || 'Pending', notes ?? null]
   );
   return result.insertId;
 };
@@ -46,9 +47,12 @@ export const createAttendance = async (data) => {
 // Update attendance log
 export const updateAttendance = async (id, data) => {
   const { checkIn, checkOut, status, notes } = data;
+  
+  // 🔥 FIX: Only update checkOut, status, and notes on second tap
+  // Do NOT re-update checkIn!
   await db.query(
-    'UPDATE shift_attendance_log SET checkIn = ?, checkOut = ?, status = ?, notes = ? WHERE id = ?',
-    [checkIn, checkOut, status, notes, id]
+    'UPDATE shift_attendance_log SET checkOut = ?, status = ?, notes = ? WHERE id = ?',
+    [checkOut ?? null, status, notes ?? null, id]
   );
 };
 

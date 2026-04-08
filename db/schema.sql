@@ -114,6 +114,7 @@ CREATE TABLE payroll (
     isCreated BOOLEAN DEFAULT FALSE,   
     isReceived BOOLEAN DEFAULT FALSE,  
     notes TEXT,
+    totalPay DECIMAL(10,2) AFTER hoursWorked;
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES user(id),
@@ -172,3 +173,12 @@ CREATE TABLE IF NOT EXISTS order_items (
   FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
   FOREIGN KEY (variant_id) REFERENCES variants(id)
 );
+
+CREATE TABLE hourly_rate (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userID INT NOT NULL,
+    rate DECIMAL(10,2) NOT NULL,          
+    effective_from DATE NOT NULL,        
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (userID) REFERENCES user(id) ON DELETE CASCADE
+) ENGINE=InnoDB;

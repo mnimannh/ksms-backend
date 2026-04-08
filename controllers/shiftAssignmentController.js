@@ -51,3 +51,13 @@ export const deleteShift = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+// GET /api/shifts/staff — get shifts for logged-in user
+export const getShiftsForStaff = async (req, res) => {
+  try {
+    const userID = req.user.id; // assuming your auth middleware sets req.user
+    const shifts = await shiftModel.getShiftsByUser(userID);
+    res.json(shifts);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};

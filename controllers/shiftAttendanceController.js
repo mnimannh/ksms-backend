@@ -66,18 +66,18 @@ export const deleteAttendanceLog = async (req, res) => {
 
 // POST /rfid/scan — called by ESP32 on every card tap
 export const scanRFID = async (req, res) => {
-const uid = req.body?.uid;
+  const uid = req.body?.uid;
   if (!uid) return res.status(400).json({ message: 'UID is required' });
 
   try {
-    // 1. Look up card — must be active
     const card = await rfidModel.getRFIDCardByUID(uid);
-    if (!card) return res.status(404).json({ message: 'Card not registered or inactive' });
+    if (!card) {
+      return res.status(404).json({ message: 'Card not registered or inactive' });
+    }
 
     const userID = card.userID;
 
-    // 2. Find an active shift for this user
-    //    Window: 5 min before start (early check-in) to 1 hour after end (late check-out)
+    // Get current shift
     const [rows] = await db.query(
       `SELECT * FROM shift_assignment
        WHERE userID = ?
@@ -89,73 +89,105 @@ const uid = req.body?.uid;
     );
 
     if (!rows || rows.length === 0) {
-      return res.status(200).json({ message: 'No active shift found for this user' });
+      return res.json({ message: 'No active shift found' });
     }
 
-    const shift     = rows[0];
-    const shiftID   = shift.id;
+    const shift      = rows[0];
+    const shiftID    = shift.id;
     const shiftStart = new Date(shift.startTime);
     const shiftEnd   = new Date(shift.endTime);
     const now        = new Date();
 
-    // 3. Get existing attendance record for this shift + user
-    const attendance = await attendanceModel.getAttendanceByShiftAndUser(shiftID, userID);
+    let attendance = await attendanceModel.getAttendanceByShiftAndUser(shiftID, userID);
 
-    // ── CHECK-IN ──────────────────────────────────────────────────
-    if (!attendance || !attendance.checkIn) {
-      // On time = within 5 minutes after shift start
-      const isOnTime = now <= new Date(shiftStart.getTime() + 5 * 60 * 1000);
+    if (Array.isArray(attendance)) {
+      attendance = attendance.length > 0 ? attendance[0] : null;
+    }
+
+    console.log("ATTENDANCE:", attendance);
+
+    // ===============================
+    // CASE 1: NO RECORD → CHECK-IN
+    // ===============================
+    if (!attendance) {
+      // 🔥 CHECK-IN: Only allowed 5 minutes BEFORE startTime
+      const earlyLimit = new Date(shiftStart.getTime() - 5 * 60 * 1000);
+      
+      if (now < earlyLimit) {
+        return res.json({
+          message: 'Too early to check in. You can check in 5 minutes before shift starts.',
+          name: card.name || 'User'
+        });
+      }
+
+      const isOnTime = now <= shiftStart;
       const status = isOnTime ? 'Completed' : 'Late';
       const notes  = isOnTime ? 'On time check-in' : 'Late check-in';
 
       await attendanceModel.createAttendance({
         shiftID,
         userID,
-        checkIn:  now,
+        checkIn: now,
         checkOut: null,
         status,
         notes,
       });
 
-      return res.json({ message: `Check-in recorded`, status, notes });
+      return res.json({
+        message: 'checkin',
+        name: card.name || 'User',
+        status,
+        notes
+      });
     }
 
-    // ── CHECK-OUT ─────────────────────────────────────────────────
-    if (!attendance.checkOut) {
-      // Block early check-out — must wait until shift end
+    // ===============================
+    // CASE 2: HAS CHECK-IN, NO CHECK-OUT → CHECK-OUT
+    // ===============================
+    if (attendance.checkIn !== null && attendance.checkOut === null) {
+
+      // 🔥 CHECK-OUT: Only allowed AFTER endTime
       if (now < shiftEnd) {
         const minutesLeft = Math.ceil((shiftEnd - now) / 60000);
         return res.json({
-          message: `Too early to check out. Shift ends in ${minutesLeft} minute(s).`,
+          message: 'Too early to check out. Shift ends in ' + minutesLeft + ' minute(s).',
+          name: card.name || 'User'
         });
       }
 
-      // 5-minute grace period after shift end = still on time
-      const graceEnd  = new Date(shiftEnd.getTime() + 5 * 60 * 1000);
-      const isOnTime  = now <= graceEnd;
-      const existingNotes = attendance.notes || '';
+      const graceEnd = new Date(shiftEnd.getTime() + 5 * 60 * 1000);
+      const isOnTime = now <= graceEnd;
 
-      // Keep Late status if check-in was already Late
       const status = (!isOnTime || attendance.status === 'Late') ? 'Late' : 'Completed';
-      const notes  = existingNotes + (isOnTime ? '; On time check-out' : '; Late check-out');
+      const notes  = (attendance.notes || '') +
+                     (isOnTime ? '; On time check-out' : '; Late check-out');
 
       await attendanceModel.updateAttendance(attendance.id, {
-        checkIn:  attendance.checkIn,
         checkOut: now,
         status,
         notes,
       });
 
-      return res.json({ message: `Check-out recorded`, status, notes });
+      return res.json({
+        message: 'checkout',
+        name: card.name || 'User',
+        status,
+        notes
+      });
     }
 
-    // ── ALREADY DONE ──────────────────────────────────────────────
-    return res.json({
-      message: 'Shift already completed',
-      status: attendance.status,
-    });
+    // ===============================
+    // CASE 3: ALREADY CHECKED IN & OUT
+    // ===============================
+    if (attendance.checkIn !== null && attendance.checkOut !== null) {
+      return res.json({
+        message: 'Already completed',
+        name: card.name || 'User'
+      });
+    }
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
