@@ -16,6 +16,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import alarmRoutes from './routes/alarmRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import inventoryReportRoutes from './routes/inventoryReportRoutes.js'
+import analyticsRoutes from './routes/analyticsRoutes.js'
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use('/api/alarm', alarmRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/upload', uploadRoutes);
 app.use('/api/reports/inventory', inventoryReportRoutes)
+app.use('/api/analytics', analyticsRoutes)
 
 // Test route
 app.get('/', (req, res) => res.send('KSMS Backend is running'));

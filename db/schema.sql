@@ -174,6 +174,19 @@ CREATE TABLE IF NOT EXISTS order_items (
   FOREIGN KEY (variant_id) REFERENCES variants(id)
 );
 
+-- Rule-based Operational Insights
+CREATE TABLE IF NOT EXISTS rule_insights (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    rule_id VARCHAR(20) NOT NULL,
+    variant_id INT NOT NULL,
+    message TEXT NOT NULL,
+    severity ENUM('info', 'warning', 'critical') DEFAULT 'warning',
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_insights_variant FOREIGN KEY (variant_id)
+        REFERENCES variants(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE TABLE hourly_rate (
     id INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
