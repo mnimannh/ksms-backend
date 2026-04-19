@@ -1,30 +1,26 @@
-// routes/payrollRoutes.js
-import * as payrollController from '../controllers/payrollController.js';
 import express from 'express';
 import authMiddleware from '../middleware/auth.js';
-import {
-  getPayrolls,
-  getPayroll,
-  getPayrollByUser,
-  createPayrollRecord,
-  updatePayrollRecord,
-  deletePayrollRecord
-} from '../controllers/payrollController.js';
+import * as payrollController from '../controllers/payrollController.js';
 
 const router = express.Router();
 
-// ✅ specific routes FIRST
+// Staff: own records + mark received
 router.get('/my-records', authMiddleware, payrollController.getMyPayroll);
-router.get('/user/:userID', getPayrollByUser);
+router.patch('/:id/received', authMiddleware, payrollController.markReceived);
 
-// ✅ general route
-router.get('/', getPayrolls);
+// Admin: month summary + generate
+router.get('/month/:month', payrollController.getMonthSummary);
+router.post('/generate', authMiddleware, payrollController.generate);
+router.post('/generate-all', authMiddleware, payrollController.generateAll);
 
-// ❗ dynamic LAST
-router.get('/:id', getPayroll);
+// User-specific
+router.get('/user/:userID', payrollController.getPayrollByUser);
 
-router.post('/', createPayrollRecord);
-router.put('/:id', updatePayrollRecord);
-router.delete('/:id', deletePayrollRecord);
+// General CRUD
+router.get('/', payrollController.getPayrolls);
+router.get('/:id', payrollController.getPayroll);
+router.post('/', payrollController.createPayrollRecord);
+router.put('/:id', payrollController.updatePayrollRecord);
+router.delete('/:id', payrollController.deletePayrollRecord);
 
 export default router;

@@ -64,6 +64,39 @@ export const deleteAttendanceLog = async (req, res) => {
   }
 };
 
+// GET all attendance logs for a month (YYYY-MM) — admin report
+export const getAllAttendanceByMonth = async (req, res) => {
+  try {
+    const logs = await attendanceModel.getAllAttendanceByMonth(req.params.month);
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// GET attendance by userID + month (YYYY-MM) — admin use
+export const getAttendanceByUserMonth = async (req, res) => {
+  try {
+    const { userID, month } = req.params;
+    const logs = await attendanceModel.getAttendanceByUserMonth(userID, month);
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// GET own attendance by month — staff use (userID from JWT)
+export const getMyAttendanceByMonth = async (req, res) => {
+  try {
+    const userID = req.user.id;
+    const { month } = req.params;
+    const logs = await attendanceModel.getAttendanceByUserMonth(userID, month);
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 // POST /rfid/scan — called by ESP32 on every card tap
 export const scanRFID = async (req, res) => {
   const uid = req.body?.uid;

@@ -1,7 +1,71 @@
-// controllers/payrollController.js
 import * as payrollModel from '../models/payrollModel.js';
 
-// GET all payroll
+export const getMonthSummary = async (req, res) => {
+  try {
+    const { month } = req.params; // 'YYYY-MM'
+    const rows = await payrollModel.getMonthSummary(month);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+export const generate = async (req, res) => {
+  try {
+    const { userID, month, hoursWorked, totalPay, notes } = req.body;
+    const createdBy = req.user.id;
+    if (!userID || !month || hoursWorked === undefined || totalPay === undefined)
+      return res.status(400).json({ message: 'userID, month, hoursWorked, totalPay required' });
+    await payrollModel.upsertPayroll({ userID, month, hoursWorked, totalPay, createdBy, notes });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+export const generateAll = async (req, res) => {
+  try {
+    const { month, records } = req.body;
+    const createdBy = req.user.id;
+    if (!month || !Array.isArray(records) || records.length === 0)
+      return res.status(400).json({ message: 'month and records[] required' });
+    for (const r of records) {
+      await payrollModel.upsertPayroll({
+        userID: r.userID,
+        month,
+        hoursWorked: r.hoursWorked,
+        totalPay: r.totalPay,
+        createdBy,
+        notes: r.notes || null,
+      });
+    }
+    res.json({ success: true, count: records.length });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+export const markReceived = async (req, res) => {
+  try {
+    const userID = req.user.id;
+    const affected = await payrollModel.markReceived(req.params.id, userID);
+    if (!affected) return res.status(404).json({ message: 'Record not found or not eligible' });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+export const getMyPayroll = async (req, res) => {
+  try {
+    const userID = req.user.id;
+    const rows = await payrollModel.getMyPayrollHistory(userID);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 export const getPayrolls = async (req, res) => {
   try {
     const payrolls = await payrollModel.getAllPayroll();
@@ -11,7 +75,6 @@ export const getPayrolls = async (req, res) => {
   }
 };
 
-// GET payroll by ID
 export const getPayroll = async (req, res) => {
   try {
     const payroll = await payrollModel.getPayrollById(req.params.id);
@@ -22,7 +85,6 @@ export const getPayroll = async (req, res) => {
   }
 };
 
-// GET payroll by userID
 export const getPayrollByUser = async (req, res) => {
   try {
     const payrolls = await payrollModel.getPayrollByUserId(req.params.userID);
@@ -32,7 +94,6 @@ export const getPayrollByUser = async (req, res) => {
   }
 };
 
-// POST create payroll
 export const createPayrollRecord = async (req, res) => {
   try {
     const insertId = await payrollModel.createPayroll(req.body);
@@ -42,7 +103,6 @@ export const createPayrollRecord = async (req, res) => {
   }
 };
 
-// PUT update payroll
 export const updatePayrollRecord = async (req, res) => {
   try {
     await payrollModel.updatePayroll(req.params.id, req.body);
@@ -52,24 +112,11 @@ export const updatePayrollRecord = async (req, res) => {
   }
 };
 
-// DELETE payroll
 export const deletePayrollRecord = async (req, res) => {
   try {
     await payrollModel.deletePayroll(req.params.id);
     res.json({ message: 'Payroll record deleted' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
-
-// GET current logged-in user's payroll with fullName
-export const getMyPayroll = async (req, res) => {
-  try {
-    const userID = req.user.id; // requires auth middleware
-    const payrolls = await payrollModel.getPayrollWithUser(userID);
-    res.json(payrolls);
-  } catch (err) {
-    console.error(err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
