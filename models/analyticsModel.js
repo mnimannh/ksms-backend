@@ -70,9 +70,13 @@ export const insertInsight = async (ruleId, variantId, message, severity) => {
 export const getAllInsights = async () => {
   const [rows] = await db.query(`
     SELECT ri.id, ri.rule_id, ri.message, ri.severity, ri.is_read, ri.created_at,
-           v.variant_name AS variant, v.quantity AS stock, v.threshold
+           v.variant_name, v.quantity AS stock, v.threshold,
+           i.inventoryName AS product_name,
+           c.name AS category_name
     FROM rule_insights ri
     JOIN variants v ON ri.variant_id = v.id
+    JOIN inventory i ON v.inventory_id = i.id
+    JOIN categories c ON i.category_id = c.id
     ORDER BY ri.created_at DESC
   `);
   return rows;
