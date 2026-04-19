@@ -52,6 +52,6 @@ export const updateShift = async (id, data) => {
 
 // Delete shift
 export const deleteShift = async (id) => {
-  await db.query('DELETE FROM attendance WHERE shiftID = ?', [id]); 
+  await db.query('DELETE FROM shift_attendance_log WHERE shiftID = ?', [id]);
   await db.query('DELETE FROM shift_assignment WHERE id = ?', [id]);
 };
