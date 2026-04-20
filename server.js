@@ -16,6 +16,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import alarmRoutes from './routes/alarmRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import inventoryReportRoutes from './routes/inventoryReportRoutes.js'
+import shiftPayrollReportRoutes from './routes/shiftPayrollReportRoutes.js'
 import analyticsRoutes from './routes/analyticsRoutes.js'
 import hourlyRateRoutes from './routes/hourlyRateRoutes.js'
 
@@ -42,6 +43,7 @@ app.use('/api/alarm', alarmRoutes);
 app.use('/uploads', express.static('uploads'));
 app.use('/api/upload', uploadRoutes);
 app.use('/api/reports/inventory', inventoryReportRoutes)
+app.use('/api/reports/shift-payroll', shiftPayrollReportRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/hourly-rates', hourlyRateRoutes)
 

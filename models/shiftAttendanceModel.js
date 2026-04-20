@@ -61,22 +61,6 @@ export const deleteAttendance = async (id) => {
   await db.query('DELETE FROM shift_attendance_log WHERE id = ?', [id]);
 };
 
-// Fetch all attendance logs for a month (YYYY-MM) — all staff
-export const getAllAttendanceByMonth = async (month) => {
-  const [rows] = await db.query(
-    `SELECT sal.id, sal.shiftID, sal.userID, u.fullName,
-            sal.checkIn, sal.checkOut, sal.status, sal.notes,
-            sa.startTime, sa.endTime, sa.shiftType
-     FROM shift_attendance_log sal
-     JOIN shift_assignment sa ON sal.shiftID = sa.id
-     JOIN user u ON u.id = sal.userID
-     WHERE DATE_FORMAT(sa.startTime, '%Y-%m') = ?
-     ORDER BY u.fullName, sa.startTime ASC`,
-    [month]
-  );
-  return rows;
-};
-
 // Fetch attendance logs for a user for a specific month (YYYY-MM)
 export const getAttendanceByUserMonth = async (userID, month) => {
   const [rows] = await db.query(

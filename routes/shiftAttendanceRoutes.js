@@ -5,7 +5,6 @@ import {
   getAttendanceLogs,
   getAttendance,
   getAttendanceByShift,
-  getAllAttendanceByMonth,
   getAttendanceByUserMonth,
   getMyAttendanceByMonth,
   createAttendanceLog,
@@ -20,7 +19,6 @@ const router = express.Router();
 router.post('/rfid/scan', scanRFID);   // ESP32 scan endpoint
 
 router.get('/', getAttendanceLogs);
-router.get('/month/:month', getAllAttendanceByMonth);
 router.get('/shift/:shiftID', getAttendanceByShift);
 router.get('/my/month/:month', authMiddleware, getMyAttendanceByMonth);
 router.get('/user/:userID/month/:month', getAttendanceByUserMonth);

@@ -1,5 +1,14 @@
 import * as HourlyRate from '../models/hourlyRateModel.js';
 
+export const getMyRates = async (req, res) => {
+  try {
+    const rows = await HourlyRate.getRatesByUser(req.user.id);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 export const getByUser = async (req, res) => {
   try {
     const rows = await HourlyRate.getRatesByUser(req.params.userID);

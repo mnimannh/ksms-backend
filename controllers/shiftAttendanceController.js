@@ -64,16 +64,6 @@ export const deleteAttendanceLog = async (req, res) => {
   }
 };
 
-// GET all attendance logs for a month (YYYY-MM) — admin report
-export const getAllAttendanceByMonth = async (req, res) => {
-  try {
-    const logs = await attendanceModel.getAllAttendanceByMonth(req.params.month);
-    res.json(logs);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
-
 // GET attendance by userID + month (YYYY-MM) — admin use
 export const getAttendanceByUserMonth = async (req, res) => {
   try {
