@@ -59,8 +59,10 @@ export const getMyPayrollHistory = async (userID) => {
        (SELECT hr.rate FROM hourly_rate hr
         WHERE hr.userID = p.userID
           AND DATE_FORMAT(hr.effective_from, '%Y-%m') <= DATE_FORMAT(p.month, '%Y-%m')
-        ORDER BY hr.effective_from DESC LIMIT 1) AS hourlyRate
+        ORDER BY hr.effective_from DESC LIMIT 1) AS hourlyRate,
+       a.fullName AS generatedByName
      FROM payroll p
+     LEFT JOIN user a ON a.id = p.createdBy
      WHERE p.userID = ?
      ORDER BY p.month DESC`,
     [userID]

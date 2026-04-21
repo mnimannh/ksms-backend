@@ -51,10 +51,10 @@ export const getRevenueDroppingVariants = async () => {
   return rows;
 };
 
-// Check if an unread insight already exists for this rule + variant
+// Check if an insight already exists for this rule + variant within the last 24 hours
 export const insightExists = async (ruleId, variantId) => {
   const [rows] = await db.query(
-    'SELECT id FROM rule_insights WHERE rule_id = ? AND variant_id = ? AND is_read = 0',
+    'SELECT id FROM rule_insights WHERE rule_id = ? AND variant_id = ? AND created_at >= NOW() - INTERVAL 24 HOUR',
     [ruleId, variantId]
   );
   return rows.length > 0;

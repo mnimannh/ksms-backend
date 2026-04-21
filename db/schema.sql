@@ -154,17 +154,13 @@ CREATE TABLE load_cell_logs (
     FOREIGN KEY (load_cell_id) REFERENCES load_cells(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- ===============================
--- 1️⃣ Orders table
--- ===============================
+
 CREATE TABLE IF NOT EXISTS orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- ===============================
---  Order items table
--- ===============================
+
 CREATE TABLE IF NOT EXISTS order_items (
   id INT AUTO_INCREMENT PRIMARY KEY,
   order_id INT NOT NULL,
