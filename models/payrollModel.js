@@ -22,7 +22,7 @@ export const getMonthSummary = async (monthStr) => {
      LEFT JOIN shift_attendance_log sal ON sal.shiftID = sa.id
      LEFT JOIN payroll p
        ON p.userID = u.id AND DATE_FORMAT(p.month, '%Y-%m') = ?
-     WHERE u.role = 'staff'
+     WHERE u.role = 'staff' AND u.status = 'active'
      GROUP BY u.id, u.fullName, u.email, p.id, p.totalPay, p.isCreated, p.isReceived, p.notes, p.created_at
      ORDER BY u.fullName`,
     [monthStr, monthStr, monthStr]
