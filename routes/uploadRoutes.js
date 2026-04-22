@@ -4,11 +4,16 @@ import path from 'path';
 
 const router = express.Router();
 
+const slugify = (str) =>
+  (str || 'file').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/products/'),
   filename: (req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, unique + path.extname(file.originalname));
+    const product = slugify(req.query.product);
+    const variant = slugify(req.query.variant);
+    const ts      = Date.now();
+    cb(null, `${product}-${variant}-${ts}${path.extname(file.originalname).toLowerCase()}`);
   },
 });
 

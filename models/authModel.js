@@ -41,3 +41,33 @@ export const login = async (email, password) => {
 
   return { success: true, user: userInfo };
 };
+
+export const getUserByEmail = async (email) => {
+  const [rows] = await db.query(
+    'SELECT id, fullName, email, status FROM user WHERE email = ?',
+    [email]
+  );
+  return rows[0];
+};
+
+export const setResetToken = async (userId, token, expiry) => {
+  await db.query(
+    'UPDATE user SET reset_token = ?, reset_token_expiry = ? WHERE id = ?',
+    [token, expiry, userId]
+  );
+};
+
+export const getUserByResetToken = async (token) => {
+  const [rows] = await db.query(
+    'SELECT id, email, fullName FROM user WHERE reset_token = ? AND reset_token_expiry > NOW() AND status = "active"',
+    [token]
+  );
+  return rows[0];
+};
+
+export const consumeResetToken = async (userId, hashedPassword) => {
+  await db.query(
+    'UPDATE user SET password = ?, is_temp_password = 0, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?',
+    [hashedPassword, userId]
+  );
+};

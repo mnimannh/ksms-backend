@@ -1,5 +1,8 @@
-import { login } from '../models/authModel.js';
+import { login, getUserByEmail, setResetToken, getUserByResetToken, consumeResetToken } from '../models/authModel.js';
+import { sendResetPasswordEmail } from '../utils/mailer.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -39,6 +42,49 @@ export const loginUser = async (req, res) => {
 
   } catch (err) {
     console.error('Login error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// POST /auth/forgot-password
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: 'Email is required' });
+
+  try {
+    const user = await getUserByEmail(email);
+
+    if (user && user.status === 'active') {
+      const token = randomBytes(32).toString('hex');
+      const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await setResetToken(user.id, token, expiry);
+      await sendResetPasswordEmail({ to: email, fullName: user.fullName, token });
+    }
+
+    // Always succeed to prevent email enumeration
+    res.json({ message: 'If that email is registered, a reset link has been sent.' });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// POST /auth/reset-password
+export const resetPassword = async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ message: 'Token and password are required' });
+  if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+
+  try {
+    const user = await getUserByResetToken(token);
+    if (!user) return res.status(400).json({ message: 'Invalid or expired reset link. Please request a new one.' });
+
+    const hashed = await bcrypt.hash(password, 10);
+    await consumeResetToken(user.id, hashed);
+
+    res.json({ message: 'Password reset successfully. You can now sign in.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

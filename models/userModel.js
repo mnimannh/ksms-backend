@@ -4,7 +4,7 @@ import db from '../db/connection.js';
 export const getAllUsers = async () => {
   const [rows] = await db.query(
     `SELECT u.id, u.fullName, u.email, u.role, u.status, u.created_at, u.last_login,
-            r.rfid_uid AS rfidUid
+            u.profile_picture, r.rfid_uid AS rfidUid
      FROM user u
      LEFT JOIN rfid r ON r.userID = u.id`
   );

@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS `user` (
     course VARCHAR(100) DEFAULT NULL,
     year_of_study TINYINT DEFAULT NULL,
     profile_picture VARCHAR(255) DEFAULT NULL,
+    reset_token VARCHAR(100) DEFAULT NULL,
+    reset_token_expiry DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL DEFAULT NULL,
     role ENUM('admin', 'staff') NOT NULL DEFAULT 'staff',
