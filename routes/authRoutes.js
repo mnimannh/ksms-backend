@@ -1,16 +1,9 @@
 import express from 'express';
-import authMiddleware from '../middleware/auth.js';
-import { loginUser, checkSession, getCurrentUser } from '../controllers/authController.js';
+import { loginUser, checkSession } from '../controllers/authController.js';
 
 const router = express.Router();
 
-// POST /auth/login
-router.post('/login', loginUser);
-
-// GET /auth/checkSession
-router.get('/checkSession', checkSession);
-
-// Current logged-in user
-router.get('/me', authMiddleware, getCurrentUser);
+router.post('/login',        loginUser);
+router.get('/checkSession',  checkSession);
 
 export default router;

@@ -15,7 +15,7 @@ export const getAllUsers = async () => {
 // Get user by ID
 export const getUserById = async (id) => {
   const [rows] = await db.query(
-    'SELECT id, fullName, email, role, status, created_at, last_login FROM user WHERE id = ?',
+    'SELECT id, fullName, email, role, status, created_at, last_login, is_temp_password, phone, address, matric_no, course, year_of_study, profile_picture FROM user WHERE id = ?',
     [id]
   );
   return rows[0];
@@ -25,7 +25,7 @@ export const getUserById = async (id) => {
 export const createUser = async (user) => {
   const { fullName, email, role, status, password } = user;
   const [result] = await db.query(
-    'INSERT INTO user (fullName, email, role, status, password) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO user (fullName, email, role, status, password, is_temp_password) VALUES (?, ?, ?, ?, ?, 1)',
     [fullName, email, role, status, password]
   );
   return result.insertId;
@@ -80,3 +80,4 @@ export const upsertRfid = async (userId, rfidUid) => {
 export const deleteRfidByUser = async (userId) => {
   await db.query('DELETE FROM rfid WHERE userID = ?', [userId]);
 };
+

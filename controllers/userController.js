@@ -1,5 +1,11 @@
 import * as userModel from '../models/userModel.js';
 import bcrypt from 'bcrypt';
+import { sendTempPasswordEmail } from '../utils/mailer.js';
+
+const generateTempPassword = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#!';
+  return Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+};
 
 export const getUsers = async (req, res) => {
   try {
@@ -22,15 +28,19 @@ export const getUser = async (req, res) => {
 
 export const addUser = async (req, res) => {
   try {
-    const { password, rfidUid, confirmPassword, ...rest } = req.body;
+    const { rfidUid, ...rest } = req.body;
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const tempPassword = generateTempPassword();
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
     const id = await userModel.createUser({ ...rest, password: hashedPassword });
 
-    // Save RFID separately if staff
     if (rest.role === 'staff' && rfidUid) {
       await userModel.upsertRfid(id, rfidUid);
     }
+
+    // Send temp password email (non-blocking — don't fail if email fails)
+    sendTempPasswordEmail({ to: rest.email, fullName: rest.fullName, tempPassword })
+      .catch(err => console.error('Email send failed:', err.message));
 
     res.status(201).json({ message: 'User created', id });
   } catch (err) {

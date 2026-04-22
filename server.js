@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 
 import authRoutes from './routes/authRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
 import userRoutes from './routes/userRoutes.js'; 
 import categoryRoutes from './routes/categoryRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
@@ -28,7 +29,8 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth',    authRoutes);
+app.use('/api/profile', profileRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/inventory', inventoryRoutes);

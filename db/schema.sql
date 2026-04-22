@@ -6,15 +6,22 @@ CREATE DATABASE IF NOT EXISTS ksms;
 USE ksms;
 
 -- 1. Users
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS `user` (
     id INT NOT NULL AUTO_INCREMENT,
     email VARCHAR(100) NOT NULL UNIQUE,
     fullName VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
+    is_temp_password TINYINT(1) NOT NULL DEFAULT 0,
+    phone VARCHAR(20) DEFAULT NULL,
+    address TEXT DEFAULT NULL,
+    matric_no VARCHAR(50) DEFAULT NULL,
+    course VARCHAR(100) DEFAULT NULL,
+    year_of_study TINYINT DEFAULT NULL,
+    profile_picture VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL DEFAULT NULL,
     role ENUM('admin', 'staff') NOT NULL DEFAULT 'staff',
-    status ENUM('active', 'inactive') DEFAULT 'active';
+    status ENUM('active', 'inactive') DEFAULT 'active',
     PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
