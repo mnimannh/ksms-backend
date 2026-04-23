@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS variants (
     inventory_id INT NOT NULL,
     variant_name VARCHAR(50) UNIQUE,
     quantity INT DEFAULT 0,
+    cost_price DECIMAL(10,2) NOT NULL DEFAULT 0,
     price DECIMAL(10,2) NOT NULL,
     barcode VARCHAR(50) UNIQUE NOT NULL,
     threshold INT DEFAULT 10,

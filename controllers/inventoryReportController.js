@@ -6,9 +6,17 @@ function fmt2(n) {
 }
 
 function enrichRow(row) {
-  const price = Number(row.price)
-  const sold  = Number(row.sold)
-  const stock = Number(row.stock)
+  const price      = Number(row.price)
+  const costPrice  = Number(row.cost_price) || 0
+  const sold       = Number(row.sold)
+  const stock      = Number(row.stock)
+
+  const revenue          = fmt2(price * sold)
+  const cogs             = fmt2(costPrice * sold)
+  const grossProfit      = fmt2(revenue - cogs)
+  const marginPct        = revenue > 0 ? Math.round((grossProfit / revenue) * 1000) / 10 : 0
+  const stockValueCost   = fmt2(costPrice * stock)
+  const potentialRevenue = fmt2(price * stock)
 
   return {
     variant_id:       row.variant_id,
@@ -23,11 +31,16 @@ function enrichRow(row) {
     barcode:          row.barcode,
     image_url:        row.image_url || null,
     price,
+    costPrice,
     stock,
     sold,
     remaining:        stock,
-    revenue:          fmt2(price * sold),
-    potentialRevenue: fmt2(price * stock),
+    revenue,
+    cogs,
+    grossProfit,
+    marginPct,
+    stockValueCost,
+    potentialRevenue,
   }
 }
 
@@ -44,7 +57,10 @@ function buildCategoryBreakdown(enrichedRows) {
         sold:             0,
         remaining:        0,
         revenue:          0,
+        cogs:             0,
+        grossProfit:      0,
         potentialRevenue: 0,
+        stockValueCost:   0,
       }
     }
     const c = map[r.category]
@@ -53,19 +69,26 @@ function buildCategoryBreakdown(enrichedRows) {
     c.sold             += r.sold
     c.remaining        += r.remaining
     c.revenue          += r.revenue
+    c.cogs             += r.cogs
+    c.grossProfit      += r.grossProfit
     c.potentialRevenue += r.potentialRevenue
+    c.stockValueCost   += r.stockValueCost
   })
 
   return Object.values(map)
     .map(c => ({
       ...c,
       revenue:          fmt2(c.revenue),
+      cogs:             fmt2(c.cogs),
+      grossProfit:      fmt2(c.grossProfit),
+      marginPct:        c.revenue > 0 ? Math.round((c.grossProfit / c.revenue) * 1000) / 10 : 0,
       potentialRevenue: fmt2(c.potentialRevenue),
+      stockValueCost:   fmt2(c.stockValueCost),
       soldPct: (c.stock + c.sold) > 0
         ? Math.round((c.sold / (c.stock + c.sold)) * 100)
         : 0,
     }))
-    .sort((a, b) => b.revenue - a.revenue)
+    .sort((a, b) => b.grossProfit - a.grossProfit)
 }
 
 function buildSummary(enrichedRows) {
@@ -76,10 +99,19 @@ function buildSummary(enrichedRows) {
     ? Math.round((totalSold / (totalStock + totalSold)) * 100)
     : 0
 
-  const totalRevenue   = fmt2(enrichedRows.reduce((s, r) => s + r.revenue,          0))
-  const totalPotential = fmt2(enrichedRows.reduce((s, r) => s + r.potentialRevenue, 0))
-  const combined       = fmt2(totalRevenue + totalPotential)
-  const realisedPct    = combined > 0 ? Math.round((totalRevenue / combined) * 100) : 0
+  const totalRevenue        = fmt2(enrichedRows.reduce((s, r) => s + r.revenue,          0))
+  const totalPotential      = fmt2(enrichedRows.reduce((s, r) => s + r.potentialRevenue, 0))
+  const combined            = fmt2(totalRevenue + totalPotential)
+  const realisedPct         = combined > 0 ? Math.round((totalRevenue / combined) * 100) : 0
+
+  const totalCogs           = fmt2(enrichedRows.reduce((s, r) => s + r.cogs,           0))
+  const totalGrossProfit    = fmt2(enrichedRows.reduce((s, r) => s + r.grossProfit,     0))
+  const overallMarginPct    = totalRevenue > 0 ? Math.round((totalGrossProfit / totalRevenue) * 1000) / 10 : 0
+  const totalStockValueCost = fmt2(enrichedRows.reduce((s, r) => s + r.stockValueCost,  0))
+
+  const withSales   = enrichedRows.filter(r => r.sold > 0)
+  const bestMargin  = withSales.length ? withSales.reduce((b, r) => r.marginPct > b.marginPct ? r : b, withSales[0]) : null
+  const worstMargin = withSales.length ? withSales.reduce((w, r) => r.marginPct < w.marginPct ? r : w, withSales[0]) : null
 
   return {
     overview: {
@@ -94,6 +126,14 @@ function buildSummary(enrichedRows) {
       potentialRevenue: totalPotential,
       combined,
       realisedPct,
+    },
+    profits: {
+      totalCogs,
+      totalGrossProfit,
+      overallMarginPct,
+      totalStockValueCost,
+      bestMargin:  bestMargin  ? { name: bestMargin.name,  marginPct: bestMargin.marginPct  } : null,
+      worstMargin: worstMargin ? { name: worstMargin.name, marginPct: worstMargin.marginPct } : null,
     },
   }
 }
