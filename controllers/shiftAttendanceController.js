@@ -1,7 +1,7 @@
 // controllers/shiftAttendanceController.js
 import * as attendanceModel from '../models/shiftAttendanceModel.js';
 import * as rfidModel from '../models/rfidCardModel.js';
-import db from '../db/connection.js';
+import * as shiftModel from '../models/shiftAssignmentModel.js';
 
 // GET all attendance logs
 export const getAttendanceLogs = async (req, res) => {
@@ -100,22 +100,12 @@ export const scanRFID = async (req, res) => {
 
     const userID = card.userID;
 
-    // Get current shift
-    const [rows] = await db.query(
-      `SELECT * FROM shift_assignment
-       WHERE userID = ?
-       AND NOW() BETWEEN DATE_SUB(startTime, INTERVAL 5 MINUTE)
-                     AND DATE_ADD(endTime, INTERVAL 1 HOUR)
-       ORDER BY startTime ASC
-       LIMIT 1`,
-      [userID]
-    );
+    const shift = await shiftModel.getCurrentShiftForUser(userID);
 
-    if (!rows || rows.length === 0) {
+    if (!shift) {
       return res.json({ message: 'No active shift found' });
     }
 
-    const shift      = rows[0];
     const shiftID    = shift.id;
     const shiftStart = new Date(shift.startTime);
     const shiftEnd   = new Date(shift.endTime);

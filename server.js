@@ -11,6 +11,7 @@ import variantRoutes from './routes/variantRoutes.js';
 import productImagesRoutes from './routes/productImagesRoutes.js';
 import shiftAssignmentRoutes from './routes/shiftAssignmentRoutes.js';
 import shiftAttendanceRoutes from './routes/shiftAttendanceRoutes.js';
+import swapRoutes            from './routes/swapRoutes.js';
 import payrollRoutes from './routes/payrollRoutes.js';
 import rfidCardRoutes from './routes/rfidCardRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -36,7 +37,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/variants', variantRoutes);
 app.use('/api/product-images', productImagesRoutes);
-app.use('/api/shifts', shiftAssignmentRoutes);        
+app.use('/api/shifts', shiftAssignmentRoutes);
+app.use('/api/swaps',  swapRoutes);        
 app.use('/api/attendance', shiftAttendanceRoutes); 
 app.use('/api/payroll', payrollRoutes);       
 app.use('/api/rfid-cards', rfidCardRoutes);       
@@ -53,5 +55,5 @@ app.use('/api/hourly-rates', hourlyRateRoutes)
 app.get('/', (req, res) => res.send('KSMS Backend is running'));
 
 // Start server
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`Server running on all interfaces on port ${PORT}`));

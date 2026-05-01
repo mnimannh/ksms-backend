@@ -1,5 +1,6 @@
 import * as profileModel from '../models/profileModel.js';
 import bcrypt from 'bcrypt';
+import { uploadToCloudinary } from '../config/cloudinary.js';
 
 export const getProfile = async (req, res) => {
   try {
@@ -47,5 +48,21 @@ export const changePassword = async (req, res) => {
     res.json({ message: 'Password changed successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+export const uploadProfilePicture = async (req, res) => {
+  if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+  try {
+    const result = await uploadToCloudinary(req.file.buffer, {
+      folder: 'ksms/profiles',
+      public_id: `user-${req.user.id}`,
+      overwrite: true,
+    });
+    await profileModel.updateProfilePicture(req.user.id, result.secure_url);
+    res.json({ url: result.secure_url });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to save profile picture', error: err.message });
   }
 };

@@ -28,3 +28,8 @@ export const changePassword = async (id, hashedPassword) => {
 export const updateProfilePicture = async (id, url) => {
   await db.query('UPDATE user SET profile_picture=? WHERE id=?', [url, id]);
 };
+
+export const getProfilePictureUrl = async (id) => {
+  const [rows] = await db.query('SELECT profile_picture FROM user WHERE id = ?', [id]);
+  return rows[0]?.profile_picture || null;
+};

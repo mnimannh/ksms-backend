@@ -94,12 +94,29 @@ CREATE TABLE shift_assignment (
     startTime DATETIME NOT NULL,
     endTime DATETIME NOT NULL,
     shiftType ENUM('Morning','Evening') DEFAULT 'Morning',
+    status ENUM('draft','published') NOT NULL DEFAULT 'published',
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES user(id),
     FOREIGN KEY (assignedBy) REFERENCES user(id)
 );
+
+CREATE TABLE shift_swap_request (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    requester_id INT NOT NULL,
+    target_id    INT NOT NULL,
+    shift_id     INT NOT NULL,
+    target_shift_id INT DEFAULT NULL,
+    status       ENUM('pending','accepted','rejected','approved','cancelled') DEFAULT 'pending',
+    admin_note   TEXT,
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (requester_id)   REFERENCES user(id),
+    FOREIGN KEY (target_id)      REFERENCES user(id),
+    FOREIGN KEY (shift_id)       REFERENCES shift_assignment(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_shift_id) REFERENCES shift_assignment(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
 
 CREATE TABLE shift_attendance_log (
     id INT AUTO_INCREMENT PRIMARY KEY,

@@ -1,28 +1,26 @@
-// routes/shiftAssignmentRoutes.js
 import express from 'express';
 import {
-  getShifts,
-  getShift,
-  getShiftsForStaff,
-  createShift,
-  updateShift,
-  deleteShift
+  getShifts, getShift, getShiftsForStaff,
+  createShift, updateShift, deleteShift,
+  autoGenerate, publishSchedule, discardDraft,
 } from '../controllers/shiftAssignmentController.js';
-import authMiddleware from '../middleware/auth.js'; // your auth middleware
+import authMiddleware from '../middleware/auth.js';
 
 const router = express.Router();
 
-// ── STAFF ROUTES ──
-// Staff sees only their own assigned shifts
-// Place BEFORE /:id so it’s not shadowed
+// Staff: own shifts only (published)
 router.get('/staff/me', authMiddleware, getShiftsForStaff);
 
-// ── ADMIN ROUTES ──
-// Admin can see all shifts
-router.get('/', authMiddleware, getShifts);
-router.get('/:id', authMiddleware, getShift);
-router.post('/', authMiddleware, createShift);
-router.put('/:id', authMiddleware, updateShift);
+// Auto-schedule
+router.post('/auto-generate', authMiddleware, autoGenerate);
+router.post('/publish',       authMiddleware, publishSchedule);
+router.delete('/draft',       authMiddleware, discardDraft);
+
+// Admin CRUD
+router.get('/',       authMiddleware, getShifts);
+router.get('/:id',    authMiddleware, getShift);
+router.post('/',      authMiddleware, createShift);
+router.put('/:id',    authMiddleware, updateShift);
 router.delete('/:id', authMiddleware, deleteShift);
 
 export default router;
