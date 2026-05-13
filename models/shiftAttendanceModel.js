@@ -47,12 +47,9 @@ export const createAttendance = async (data) => {
 // Update attendance log
 export const updateAttendance = async (id, data) => {
   const { checkIn, checkOut, status, notes } = data;
-  
-  // 🔥 FIX: Only update checkOut, status, and notes on second tap
-  // Do NOT re-update checkIn!
   await db.query(
-    'UPDATE shift_attendance_log SET checkOut = ?, status = ?, notes = ? WHERE id = ?',
-    [checkOut ?? null, status, notes ?? null, id]
+    'UPDATE shift_attendance_log SET checkIn = COALESCE(?, checkIn), checkOut = ?, status = ?, notes = ? WHERE id = ?',
+    [checkIn ?? null, checkOut ?? null, status, notes ?? null, id]
   );
 };
 
