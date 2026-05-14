@@ -87,30 +87,37 @@ export const getMyAttendanceByMonth = async (req, res) => {
   }
 };
 
-// POST /rfid/scan — called by ESP32 on every card tap
-// POST /rfid/scan — called by ESP32 on every card tap
 export const scanRFID = async (req, res) => {
   const uid = req.body?.uid;
   if (!uid) return res.status(400).json({ message: 'UID is required' });
 
   try {
+    // 1. Get RFID card
     const card = await rfidModel.getRFIDCardByUID(uid);
     if (!card) {
       return res.status(404).json({ message: 'Card not registered or inactive' });
     }
 
     const userID = card.userID;
-    const shift = await shiftModel.getCurrentShiftForUser(userID);
 
+    // 2. Get USER (THIS FIXES YOUR NAME ISSUE)
+    const user = await rfidModel.getUserById(userID);
+
+    // 3. Get shift
+    const shift = await shiftModel.getCurrentShiftForUser(userID);
     if (!shift) {
-      return res.json({ message: 'No active shift found' });
+      return res.json({
+        message: 'No active shift found',
+        name: user?.fullName || 'Unknown'
+      });
     }
 
-    const shiftID    = shift.id;
+    const shiftID = shift.id;
     const shiftStart = new Date(shift.startTime);
-    const shiftEnd   = new Date(shift.endTime);
-    const now        = new Date();
+    const shiftEnd = new Date(shift.endTime);
+    const now = new Date();
 
+    // 4. Get attendance
     let attendance = await attendanceModel.getAttendanceByShiftAndUser(shiftID, userID);
 
     if (Array.isArray(attendance)) {
@@ -119,52 +126,60 @@ export const scanRFID = async (req, res) => {
 
     console.log("ATTENDANCE STATE:", attendance);
 
-    // ===============================
-    // CASE 1: NO RECORD OR PENDING (No check-in yet) → CHECK-IN
-    // ===============================
+    // =========================
+    // CHECK-IN
+    // =========================
     if (!attendance || attendance.checkIn === null) {
+
       const earlyLimit = new Date(shiftStart.getTime() - 5 * 60 * 1000);
-      
+
       if (now < earlyLimit) {
         return res.json({
-          message: 'Too early to check in. You can check in 5 minutes before shift starts.',
-          name: card.card_name || card.name || 'User'
+          message: 'Too early to check in',
+          name: user?.fullName || 'Unknown'
         });
       }
 
       const isOnTime = now <= shiftStart;
       const status = isOnTime ? 'Completed' : 'Late';
-      const notes  = isOnTime ? 'On time check-in' : 'Late check-in';
+      const notes = isOnTime ? 'On time check-in' : 'Late check-in';
 
       if (!attendance) {
-        // Fallback just in case publishDrafts didn't run
         await attendanceModel.createAttendance({
-          shiftID, userID, checkIn: now, checkOut: null, status, notes
+          shiftID,
+          userID,
+          checkIn: now,
+          checkOut: null,
+          status,
+          notes
         });
       } else {
-        // Update the existing "Pending" record!
         await attendanceModel.updateAttendance(attendance.id, {
-          checkIn: now, status, notes
+          checkIn: now,
+          status,
+          notes
         });
       }
 
       return res.json({
         message: 'checkin',
-        name: card.card_name || card.name || 'User',
+        name: user?.fullName || 'Unknown',
         status,
         notes
       });
     }
 
-    // ===============================
-    // CASE 2: HAS CHECK-IN, NO CHECK-OUT → CHECK-OUT
-    // ===============================
+    // =========================
+    // CHECK-OUT
+    // =========================
     if (attendance.checkIn !== null && attendance.checkOut === null) {
+
       if (now < shiftEnd) {
         const minutesLeft = Math.ceil((shiftEnd - now) / 60000);
+
         return res.json({
-          message: 'Too early to check out. Shift ends in ' + minutesLeft + ' minute(s).',
-          name: card.card_name || card.name || 'User'
+          message: `Too early to check out. Shift ends in ${minutesLeft} minute(s).`,
+          name: user?.fullName || 'Unknown'
         });
       }
 
@@ -172,37 +187,43 @@ export const scanRFID = async (req, res) => {
       const isOnTime = now <= graceEnd;
 
       const status = (!isOnTime || attendance.status === 'Late') ? 'Late' : 'Completed';
-      const notes  = (attendance.notes || '') + (isOnTime ? '; On time check-out' : '; Late check-out');
+      const notes =
+        (attendance.notes || '') +
+        (isOnTime ? '; On time check-out' : '; Late check-out');
 
       await attendanceModel.updateAttendance(attendance.id, {
-        checkOut: now, status, notes
+        checkOut: now,
+        status,
+        notes
       });
 
       return res.json({
         message: 'checkout',
-        name: card.card_name || card.name || 'User',
+        name: user?.fullName || 'Unknown',
         status,
         notes
       });
     }
 
-    // ===============================
-    // CASE 3: ALREADY CHECKED IN & OUT
-    // ===============================
+    // =========================
+    // ALREADY DONE
+    // =========================
     if (attendance.checkIn !== null && attendance.checkOut !== null) {
       return res.json({
         message: 'Already completed',
-        name: card.card_name || card.name || 'User'
+        name: user?.fullName || 'Unknown'
       });
     }
 
-    // ===============================
-    // SAFETY FALLBACK (Prevents Hanging)
-    // ===============================
-    return res.status(200).json({ message: 'Scan received, but no action was matched.' });
+    return res.status(200).json({
+      message: 'Scan received, but no action was matched.'
+    });
 
   } catch (err) {
     console.error("SCAN ERROR:", err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    return res.status(500).json({
+      message: 'Server error',
+      error: err.message
+    });
   }
 };

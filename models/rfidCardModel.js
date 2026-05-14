@@ -58,3 +58,12 @@ export const updateRFIDCard = async (id, data) => {
 export const deleteRFIDCard = async (id) => {
   await db.query('DELETE FROM rfid WHERE id = ?', [id]);
 };
+
+// Add to models/rfidCardModel.js
+export const getUserById = async (id) => {
+  const [rows] = await db.query(
+    'SELECT * FROM user WHERE id = ?',
+    [id]
+  );
+  return rows[0];
+};
