@@ -94,3 +94,15 @@ export const cancel = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+
+// GET /api/swaps/pending-admin — admin looks for trades accepted by staff
+export const getPendingAdmin = async (req, res) => {
+  try {
+    // Change this line to pull absolutely everything from the DB
+    const data = await swap.getAllSwaps(); 
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};

@@ -1,7 +1,11 @@
+// controllers/alarmController.js
 import * as alarmModel from '../models/alarmModel.js';
 
 export const getAlarms = async (req, res) => {
   try {
+    // FIX: auto-resolve any alarms where stock recovered before fetching
+    await alarmModel.autoResolveAlarms();
+
     const alarms = await alarmModel.getAllAlarms();
     res.json(alarms);
   } catch (err) {

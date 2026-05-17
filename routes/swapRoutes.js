@@ -1,11 +1,14 @@
 import express from 'express';
 import authMiddleware from '../middleware/auth.js';
-import { createSwap, getIncoming, getMine, getAll, respond, approve, reject, cancel } from '../controllers/swapController.js';
+
+import { createSwap, getIncoming, getMine, getAll, respond, approve, reject, cancel, getPendingAdmin } from '../controllers/swapController.js';
 
 const router = express.Router();
 router.use(authMiddleware);
 
-router.get('/',                 getAll);       // admin
+
+router.get('/pending-admin',   getPendingAdmin); 
+router.get('/',                 getAll);       // admin view all history
 router.get('/incoming',         getIncoming);  // target staff
 router.get('/mine',             getMine);      // requester staff
 router.post('/',                createSwap);

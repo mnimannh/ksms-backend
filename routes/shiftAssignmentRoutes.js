@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  getShifts, getShift, getShiftsForStaff,
+  getShifts, getShift, getShiftsForStaff, getShiftsByStaffId, // Added here
   createShift, updateShift, deleteShift,
   autoGenerate, publishSchedule, discardDraft,
 } from '../controllers/shiftAssignmentController.js';
@@ -10,6 +10,9 @@ const router = express.Router();
 
 // Staff: own shifts only (published)
 router.get('/staff/me', authMiddleware, getShiftsForStaff);
+
+// Staff: colleague shifts for calendar comparison (MUST remain below /staff/me)
+router.get('/staff/:id', authMiddleware, getShiftsByStaffId);
 
 // Auto-schedule
 router.post('/auto-generate', authMiddleware, autoGenerate);

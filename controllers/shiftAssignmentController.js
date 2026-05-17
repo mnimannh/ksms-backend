@@ -203,3 +203,14 @@ export const getShiftsForStaff = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+// GET /api/shifts/staff/:id — get shifts for a specific colleague
+export const getShiftsByStaffId = async (req, res) => {
+  try {
+    const { id } = req.params; // Grabs the '4' from /api/shifts/staff/4
+    const shifts = await shiftModel.getShiftsByUser(id);
+    res.json(shifts);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};

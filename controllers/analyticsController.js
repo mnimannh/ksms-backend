@@ -1,13 +1,38 @@
+// controllers/analyticsController.js
 import * as analyticsModel from '../models/analyticsModel.js';
+
+/**
+ * FIX: Replace insightExists(rule, variantId) with
+ *      insightExistsWithinDays(rule, variantId, days)
+ *
+ * Each rule has its own sensible re-fire window:
+ *   INV-002 slow-moving  → re-check every 30 days (matches the detection window)
+ *   INV-003 fast sell    → re-check every 7 days  (matches the detection window)
+ *   INV-004 revenue drop → re-check every 7 days  (week-over-week comparison)
+ *
+ * Update analyticsModel.js — replace insightExists with:
+ *
+ *   export const insightExistsWithinDays = async (ruleId, variantId, days) => {
+ *     const [rows] = await db.query(
+ *       `SELECT id FROM inventory_insights
+ *        WHERE rule_id = ? AND variant_id = ?
+ *          AND created_at >= NOW() - INTERVAL ? DAY
+ *        LIMIT 1`,
+ *       [ruleId, variantId, days]
+ *     );
+ *     return rows.length > 0;
+ *   };
+ */
 
 export const runRules = async (req, res) => {
   try {
     let newCount = 0;
 
     // INV-002: Slow-moving stock (no sales in 30 days)
+    // Re-fires at most once every 30 days per variant
     const slowMoving = await analyticsModel.getSlowMovingVariants();
     for (const v of slowMoving) {
-      const exists = await analyticsModel.insightExists('INV-002', v.id);
+      const exists = await analyticsModel.insightExistsWithinDays('INV-002', v.id, 30);
       if (!exists) {
         await analyticsModel.insertInsight(
           'INV-002', v.id,
@@ -19,9 +44,10 @@ export const runRules = async (req, res) => {
     }
 
     // INV-003: High sell-through rate (> 90% in last 7 days)
+    // Re-fires at most once every 7 days per variant
     const highSellThrough = await analyticsModel.getHighSellThroughVariants();
     for (const v of highSellThrough) {
-      const exists = await analyticsModel.insightExists('INV-003', v.id);
+      const exists = await analyticsModel.insightExistsWithinDays('INV-003', v.id, 7);
       if (!exists) {
         await analyticsModel.insertInsight(
           'INV-003', v.id,
@@ -33,9 +59,10 @@ export const runRules = async (req, res) => {
     }
 
     // INV-004: Revenue drop > 20% week-over-week
+    // Re-fires at most once every 7 days per variant
     const revenueDrop = await analyticsModel.getRevenueDroppingVariants();
     for (const v of revenueDrop) {
-      const exists = await analyticsModel.insightExists('INV-004', v.id);
+      const exists = await analyticsModel.insightExistsWithinDays('INV-004', v.id, 7);
       if (!exists) {
         const drop = Math.round((v.last_week - v.this_week) / v.last_week * 100);
         await analyticsModel.insertInsight(
