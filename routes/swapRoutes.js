@@ -8,6 +8,7 @@ router.use(authMiddleware);
 
 
 router.get('/pending-admin',   getPendingAdmin); 
+router.get('/admin-all',       getAll); //
 router.get('/',                 getAll);       // admin view all history
 router.get('/incoming',         getIncoming);  // target staff
 router.get('/mine',             getMine);      // requester staff

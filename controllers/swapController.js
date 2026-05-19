@@ -3,10 +3,15 @@ import * as swap from '../models/swapModel.js';
 // POST /api/swaps — staff creates a swap request
 export const createSwap = async (req, res) => {
   try {
-    const requesterId  = req.user.id;
+    const requesterId = req.user.id;
     const { targetId, shiftId, targetShiftId } = req.body;
-    if (!targetId || !shiftId) return res.status(400).json({ message: 'targetId and shiftId are required' });
-    if (targetId === requesterId) return res.status(400).json({ message: 'Cannot swap with yourself' });
+    
+    if (!targetId || !shiftId) {
+      return res.status(400).json({ message: 'targetId and shiftId are required' });
+    }
+    if (targetId === requesterId) {
+      return res.status(400).json({ message: 'Cannot swap with yourself' });
+    }
 
     const id = await swap.createSwapRequest({ requesterId, targetId, shiftId, targetShiftId });
     res.status(201).json({ success: true, id });
@@ -33,7 +38,7 @@ export const getMine = async (req, res) => {
   }
 };
 
-// GET /api/swaps — admin sees all swaps
+// GET /api/swaps — admin sees all historical and active swaps
 export const getAll = async (req, res) => {
   try {
     res.json(await swap.getAllSwaps());
@@ -46,8 +51,9 @@ export const getAll = async (req, res) => {
 export const respond = async (req, res) => {
   try {
     const { status } = req.body; // 'accepted' | 'rejected'
-    if (!['accepted', 'rejected'].includes(status))
-      return res.status(400).json({ message: 'status must be accepted or rejected' });
+    if (!['accepted', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: 'Status must be accepted or rejected' });
+    }
 
     const s = await swap.getSwapById(req.params.id);
     if (!s) return res.status(404).json({ message: 'Swap not found' });
@@ -61,27 +67,40 @@ export const respond = async (req, res) => {
   }
 };
 
-// PATCH /api/swaps/:id/approve — admin approves
+// PATCH /api/swaps/:id/approve — admin approves trade
 export const approve = async (req, res) => {
   try {
-    const s = await swap.getSwapById(req.params.id);
-    if (!s) return res.status(404).json({ message: 'Swap not found' });
-    if (s.status !== 'accepted') return res.status(409).json({ message: 'Swap not yet accepted by target' });
+    const { id } = req.params;
+    const { adminNote } = req.body;
 
-    await swap.approveSwap(req.params.id, req.body.adminNote);
-    res.json({ success: true });
+    const s = await swap.getSwapById(id);
+    if (!s) return res.status(404).json({ message: 'Swap request not found' });
+    
+    // Status Guard Rails
+    if (s.status === 'approved') return res.status(409).json({ message: 'This trade has already been approved' });
+    if (s.status !== 'accepted') return res.status(409).json({ message: 'Trade must be accepted by target employee first' });
+
+    await swap.approveSwap(id, adminNote);
+    res.json({ success: true, message: 'Shift swap approved and roster updated successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: 'Server transaction failure while processing roster swap', error: err.message });
   }
 };
 
-// PATCH /api/swaps/:id/reject — admin rejects
+// PATCH /api/swaps/:id/reject — admin rejects trade
 export const reject = async (req, res) => {
   try {
-    await swap.rejectSwap(req.params.id, req.body.adminNote);
-    res.json({ success: true });
+    const { id } = req.params;
+    const { adminNote } = req.body;
+
+    const s = await swap.getSwapById(id);
+    if (!s) return res.status(404).json({ message: 'Swap request not found' });
+    if (s.status !== 'accepted') return res.status(409).json({ message: 'Can only reject swap requests that are accepted by staff' });
+
+    await swap.rejectSwap(id, adminNote);
+    res.json({ success: true, message: 'Swap request denied' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: 'Server error updating swap record', error: err.message });
   }
 };
 
@@ -95,14 +114,21 @@ export const cancel = async (req, res) => {
   }
 };
 
-
-// GET /api/swaps/pending-admin — admin looks for trades accepted by staff
+// GET /api/swaps/pending-admin — admin views actionable requests only
 export const getPendingAdmin = async (req, res) => {
   try {
-    // Change this line to pull absolutely everything from the DB
-    const data = await swap.getAllSwaps(); 
+    const data = await swap.getPendingAdminSwaps();
     res.json(data);
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: 'Server error fetching admin actionable list', error: err.message });
+  }
+};
+
+export const getAdminAll = async (req, res) => {
+  try {
+    const data = await swap.getAllSwapsForAdmin();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error fetching unified swap registry', error: err.message });
   }
 };

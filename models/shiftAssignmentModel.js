@@ -2,9 +2,14 @@
 import db from '../db/connection.js';
 
 // Fetch all shifts (admin — includes draft + published)
+// FIX: Force MySQL to return startTime and endTime as plain strings to prevent timezone shifting
 export const getAllShifts = async () => {
   const [rows] = await db.query(`
-    SELECT s.*, u.fullName AS assignedByName
+    SELECT 
+      s.id, s.userID, s.assignedBy, s.shiftType, s.status, s.notes,
+      DATE_FORMAT(s.startTime, '%Y-%m-%d %H:%i:%s') AS startTime,
+      DATE_FORMAT(s.endTime, '%Y-%m-%d %H:%i:%s') AS endTime,
+      u.fullName AS assignedByName
     FROM shift_assignment s
     LEFT JOIN user u ON s.assignedBy = u.id
     ORDER BY s.startTime ASC
@@ -14,8 +19,13 @@ export const getAllShifts = async () => {
 
 // Fetch a shift by ID
 export const getShiftById = async (id) => {
-  const [rows] = await db.query(
-    'SELECT * FROM shift_assignment WHERE id = ?',
+  const [rows] = await db.query(`
+    SELECT 
+      id, userID, assignedBy, shiftType, status, notes,
+      DATE_FORMAT(startTime, '%Y-%m-%d %H:%i:%s') AS startTime,
+      DATE_FORMAT(endTime, '%Y-%m-%d %H:%i:%s') AS endTime
+    FROM shift_assignment 
+    WHERE id = ?`,
     [id]
   );
   return rows[0];
@@ -24,7 +34,11 @@ export const getShiftById = async (id) => {
 // Fetch published shifts for a specific staff (staff view — no drafts)
 export const getShiftsByUser = async (userID) => {
   const [rows] = await db.query(`
-    SELECT s.*, u.fullName AS assignedByName
+    SELECT 
+      s.id, s.userID, s.assignedBy, s.shiftType, s.status, s.notes,
+      DATE_FORMAT(s.startTime, '%Y-%m-%d %H:%i:%s') AS startTime,
+      DATE_FORMAT(s.endTime, '%Y-%m-%d %H:%i:%s') AS endTime,
+      u.fullName AS assignedByName
     FROM shift_assignment s
     LEFT JOIN user u ON s.assignedBy = u.id
     WHERE s.userID = ? AND s.status = 'published'
@@ -32,6 +46,7 @@ export const getShiftsByUser = async (userID) => {
   `, [userID]);
   return rows;
 };
+
 // Create a new shift (manual — published immediately)
 export const createShift = async (data) => {
   const { userID, assignedBy, startTime, endTime, shiftType, notes } = data;
@@ -125,7 +140,10 @@ export const deleteShift = async (id) => {
 // Fetch the currently active shift for a user (within ±5 min window)
 export const getCurrentShiftForUser = async (userID) => {
   const [rows] = await db.query(
-    `SELECT * FROM shift_assignment
+    `SELECT *, 
+            DATE_FORMAT(startTime, '%Y-%m-%d %H:%i:%s') AS startTime,
+            DATE_FORMAT(endTime, '%Y-%m-%d %H:%i:%s') AS endTime 
+     FROM shift_assignment
      WHERE userID = ?
      AND NOW() BETWEEN DATE_SUB(startTime, INTERVAL 5 MINUTE)
                    AND DATE_ADD(endTime, INTERVAL 1 HOUR)

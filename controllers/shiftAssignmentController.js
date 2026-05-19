@@ -25,11 +25,17 @@ function autoGenerateAlgorithm({ year, month, staff, staffPerSlot, morningStart,
   const slots = ['Morning', 'Evening'];
   const blockedSet = new Set(blockedDates);
 
+  // Convert month to 0-based for native JS Date constructors
+  const jsMonthIdx = month - 1;
+
   // Count working days to calculate fair target
   let workingDays = 0;
   for (let d = 1; d <= days; d++) {
     const dateStr = `${monthStr}-${String(d).padStart(2, '0')}`;
-    const dow = new Date(`${dateStr}T00:00:00`).getDay();
+    
+    // FIX: Use explicit numeric constructor to avoid timezone string shifts
+    const dow = new Date(year, jsMonthIdx, d).getDay(); 
+    
     if (skipWeekends && (dow === 0 || dow === 6)) continue;
     if (blockedSet.has(dateStr)) continue;
     workingDays++;
@@ -46,7 +52,9 @@ function autoGenerateAlgorithm({ year, month, staff, staffPerSlot, morningStart,
 
   for (let d = 1; d <= days; d++) {
     const dateStr = `${monthStr}-${String(d).padStart(2, '0')}`;
-    const dow = new Date(`${dateStr}T00:00:00`).getDay();
+    
+    // FIX: Use explicit numeric constructor here as well
+    const dow = new Date(year, jsMonthIdx, d).getDay();
 
     // Skip weekends
     if (skipWeekends && (dow === 0 || dow === 6)) continue;

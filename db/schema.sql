@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS variants (
     price DECIMAL(10,2) NOT NULL,
     barcode VARCHAR(50) UNIQUE NOT NULL,
     threshold INT DEFAULT 10,
+    stock_tracking_type ENUM('manual','load_cell')
+    DEFAULT 'manual',
     lastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_variants_inventory FOREIGN KEY (inventory_id)
         REFERENCES inventory(id) ON DELETE CASCADE
@@ -162,24 +164,32 @@ CREATE TABLE rfid(
 
 CREATE TABLE load_cells (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    variant_id INT NOT NULL,
-    sensor_uid VARCHAR(50) NOT NULL UNIQUE,   -- ESP32 / HX711 ID
-    calibration_factor DECIMAL(10,4) NOT NULL,
-    empty_weight DECIMAL(10,2) NOT NULL,      -- Container weight
-    unit_weight DECIMAL(10,2) NOT NULL,       -- Weight per item
-    is_active BOOLEAN DEFAULT TRUE,
-    installed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (variant_id) REFERENCES variants(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+    sensor_uid VARCHAR(100) NOT NULL UNIQUE,
+    variant_id INT NULL,
+    calibration_factor DECIMAL(10,4),
+    empty_weight DECIMAL(10,2),
+    unit_weight DECIMAL(10,2),
+    latest_weight DECIMAL(10,2) DEFAULT 0,
+    calculated_quantity INT DEFAULT 0,
+    status ENUM('unassigned','active','inactive')
+    DEFAULT 'unassigned',
+    last_seen DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (variant_id)
+    REFERENCES variants(id)
+    ON DELETE SET NULL
+);
 
 CREATE TABLE load_cell_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     load_cell_id INT NOT NULL,
     weight DECIMAL(10,2) NOT NULL,
-    calculated_quantity INT NOT NULL,
-    recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (load_cell_id) REFERENCES load_cells(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+    quantity INT NOT NULL,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (load_cell_id)
+    REFERENCES load_cells(id)
+    ON DELETE CASCADE
+);
 
 
 CREATE TABLE IF NOT EXISTS orders (

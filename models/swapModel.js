@@ -67,23 +67,46 @@ export const respondSwap = async (id, status) => {
   );
 };
 
-// Admin approves: swap the userIDs on both shift_assignment rows
+// Admin approves: safely swaps userIDs across schedules & logs within a transaction
 export const approveSwap = async (id, adminNote) => {
   const swap = await getSwapById(id);
   if (!swap) throw new Error('Swap request not found');
 
-  await db.query('UPDATE shift_swap_request SET status = ?, admin_note = ? WHERE id = ?', ['approved', adminNote ?? null, id]);
+  // Obtain a dedicated single connection from the pool to run a secure transaction
+  const connection = await db.getConnection();
 
-  // Swap requester into target's shift, target into requester's shift
-  await db.query('UPDATE shift_assignment SET userID = ? WHERE id = ?', [swap.target_id,    swap.shift_id]);
-  if (swap.target_shift_id) {
-    await db.query('UPDATE shift_assignment SET userID = ? WHERE id = ?', [swap.requester_id, swap.target_shift_id]);
-  }
+  try {
+    await connection.beginTransaction();
 
-  // Update attendance logs too
-  await db.query('UPDATE shift_attendance_log SET userID = ? WHERE shiftID = ?', [swap.target_id,    swap.shift_id]);
-  if (swap.target_shift_id) {
-    await db.query('UPDATE shift_attendance_log SET userID = ? WHERE shiftID = ?', [swap.requester_id, swap.target_shift_id]);
+    // 1. Mark the swap request record as approved
+    await connection.query(
+      'UPDATE shift_swap_request SET status = ?, admin_note = ? WHERE id = ?', 
+      ['approved', adminNote ?? null, id]
+    );
+
+    // 2. Re-route Shift Assignments 
+    // Re-assign original shift to the target teammate
+    await connection.query('UPDATE shift_assignment SET userID = ? WHERE id = ?', [swap.target_id, swap.shift_id]);
+    
+    // If it was a mutual swap, assign target's original shift back to the requester
+    if (swap.target_shift_id) {
+      await connection.query('UPDATE shift_assignment SET userID = ? WHERE id = ?', [swap.requester_id, swap.target_shift_id]);
+    }
+
+    // 3. Update active attendance tracking tables
+    await connection.query('UPDATE shift_attendance_log SET userID = ? WHERE shiftID = ?', [swap.target_id, swap.shift_id]);
+    if (swap.target_shift_id) {
+      await connection.query('UPDATE shift_attendance_log SET userID = ? WHERE shiftID = ?', [swap.requester_id, swap.target_shift_id]);
+    }
+
+    // Commit all queries safely to the disk
+    await connection.commit();
+  } catch (error) {
+    // If any statement breaks, roll back changes to preserve scheduling stability
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
   }
 };
 
@@ -100,4 +123,9 @@ export const cancelSwap = async (id, requesterId) => {
      WHERE id = ? AND requester_id = ? AND status = 'pending'`,
     [id, requesterId]
   );
+};
+
+export const getAllSwapsForAdmin = async () => {
+  const [rows] = await db.query(`${SELECT_SWAP} ORDER BY r.created_at DESC`);
+  return rows;
 };
