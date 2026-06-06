@@ -1,19 +1,16 @@
-import nodemailer from 'nodemailer';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-});
+// Initialize Resend with your API Key
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 export const sendResetPasswordEmail = async ({ to, fullName, token }) => {
   const resetUrl = `${FRONTEND_URL}/reset-password?token=${token}`;
-  await transporter.sendMail({
-    from: process.env.MAIL_FROM,
-    to,
+
+  await resend.emails.send({
+    // If you haven't domain-verified yet, use this default Resend address for testing:
+    from: process.env.MAIL_FROM || 'KSMS <onboarding@resend.dev>',
+    to: [to],
     subject: 'Reset Your KSMS Password',
     html: `
       <div style="font-family:'DM Sans',Arial,sans-serif;max-width:520px;margin:0 auto;background:#f8fafc;border-radius:12px;overflow:hidden;">
@@ -45,9 +42,9 @@ export const sendResetPasswordEmail = async ({ to, fullName, token }) => {
 };
 
 export const sendTempPasswordEmail = async ({ to, fullName, tempPassword }) => {
-  await transporter.sendMail({
-    from: process.env.MAIL_FROM,
-    to,
+  await resend.emails.send({
+    from: process.env.MAIL_FROM || 'KSMS <onboarding@resend.dev>',
+    to: [to],
     subject: 'Your KSMS Account Has Been Created',
     html: `
       <div style="font-family:'DM Sans',Arial,sans-serif;max-width:520px;margin:0 auto;background:#f8fafc;border-radius:12px;overflow:hidden;">
