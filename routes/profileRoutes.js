@@ -1,7 +1,6 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
 
 import authMiddleware from '../middleware/auth.js';
 
@@ -16,40 +15,17 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-// ── Ensure upload folder exists ─────────────────────────────
-const uploadPath = 'uploads/profile';
-
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
-}
-
-// ── Multer Storage ──────────────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadPath);
-  },
-
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-
-    // example: user-5.jpg
-    const fileName = `user-${req.user.id}${ext}`;
-
-    cb(null, fileName);
-  },
-});
+// ── Multer Memory Storage (Crucial for Supabase) ──────────────
+const storage = multer.memoryStorage();
 
 // ── Upload Config ───────────────────────────────────────────
 const upload = multer({
   storage,
-
   limits: {
-    fileSize: 3 * 1024 * 1024,
+    fileSize: 3 * 1024 * 1024, // 3MB limit
   },
-
   fileFilter: (req, file, cb) => {
     const allowed = /jpeg|jpg|png|webp/;
-
     const isValid = allowed.test(
       path.extname(file.originalname).toLowerCase()
     );
@@ -64,11 +40,10 @@ const upload = multer({
 
 // ── Routes ──────────────────────────────────────────────────
 router.get('/', getProfile);
-
 router.put('/', updateProfile);
-
 router.put('/password', changePassword);
 
+// Handles the upload to req.file.buffer
 router.post(
   '/picture',
   upload.single('image'),

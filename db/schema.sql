@@ -1,6 +1,8 @@
 -- ========================================
--- KSMS Database Schema (MySQL 12 Backup)
+-- KSMS Database Schema (Fixed & Optimized)
 -- ========================================
+
+SET FOREIGN_KEY_CHECKS = 0; -- Turns off constraint checking while building
 
 CREATE DATABASE IF NOT EXISTS ksms;
 USE ksms;
@@ -35,7 +37,6 @@ CREATE TABLE IF NOT EXISTS categories (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-
 -- 3. Inventory (Products)
 CREATE TABLE IF NOT EXISTS inventory (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -58,8 +59,7 @@ CREATE TABLE IF NOT EXISTS variants (
     price DECIMAL(10,2) NOT NULL,
     barcode VARCHAR(50) UNIQUE NOT NULL,
     threshold INT DEFAULT 10,
-    stock_tracking_type ENUM('manual','load_cell')
-    DEFAULT 'manual',
+    stock_tracking_type ENUM('manual','load_cell') DEFAULT 'manual',
     lastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_variants_inventory FOREIGN KEY (inventory_id)
         REFERENCES inventory(id) ON DELETE CASCADE
@@ -89,7 +89,8 @@ CREATE TABLE IF NOT EXISTS low_stock_alerts (
     UNIQUE KEY ux_variant_unread (variant_id, is_read)
 ) ENGINE=InnoDB;
 
-CREATE TABLE shift_assignment (
+-- 7. Shift Assignment
+CREATE TABLE IF NOT EXISTS shift_assignment (
     id INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
     assignedBy INT NOT NULL,
@@ -102,9 +103,10 @@ CREATE TABLE shift_assignment (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES user(id),
     FOREIGN KEY (assignedBy) REFERENCES user(id)
-);
+) ENGINE=InnoDB;
 
-CREATE TABLE shift_swap_request (
+-- 8. Shift Swap Request
+CREATE TABLE IF NOT EXISTS shift_swap_request (
     id           INT AUTO_INCREMENT PRIMARY KEY,
     requester_id INT NOT NULL,
     target_id    INT NOT NULL,
@@ -120,7 +122,8 @@ CREATE TABLE shift_swap_request (
     FOREIGN KEY (target_shift_id) REFERENCES shift_assignment(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
-CREATE TABLE shift_attendance_log (
+-- 9. Shift Attendance Log
+CREATE TABLE IF NOT EXISTS shift_attendance_log (
     id INT AUTO_INCREMENT PRIMARY KEY,
     shiftID INT NOT NULL,
     userID INT NOT NULL,
@@ -132,37 +135,40 @@ CREATE TABLE shift_attendance_log (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (shiftID) REFERENCES shift_assignment(id),
     FOREIGN KEY (userID) REFERENCES user(id)
-);
+) ENGINE=InnoDB;
 
-CREATE TABLE payroll (
+-- 10. Payroll (Fixed syntax error here)
+CREATE TABLE IF NOT EXISTS payroll (
     id INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,            
     month DATE NOT NULL,               
     hoursWorked DECIMAL(5,2) NOT NULL, 
+    totalPay DECIMAL(10,2), -- Fixed: Removed the breaking semicolon and AFTER clause
     createdBy INT NOT NULL,          
     isCreated BOOLEAN DEFAULT FALSE,   
     isReceived BOOLEAN DEFAULT FALSE,  
     notes TEXT,
-    totalPay DECIMAL(10,2) AFTER hoursWorked;
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES user(id),
     FOREIGN KEY (createdBy) REFERENCES user(id),
     UNIQUE KEY (userID, month)        
-);
+) ENGINE=InnoDB;
 
-CREATE TABLE rfid(
+-- 11. RFID
+CREATE TABLE IF NOT EXISTS rfid(
     id INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
     rfid_uid VARCHAR(50) NOT NULL UNIQUE,   
-    card_name VARCHAR(50),                 
+    card_name VARCHAR(50),                                 
     is_active BOOLEAN DEFAULT TRUE,
     assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES user(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-CREATE TABLE load_cells (
+-- 12. Load Cells
+CREATE TABLE IF NOT EXISTS load_cells (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sensor_uid VARCHAR(100) NOT NULL UNIQUE,
     variant_id INT NULL,
@@ -171,33 +177,29 @@ CREATE TABLE load_cells (
     unit_weight DECIMAL(10,2),
     latest_weight DECIMAL(10,2) DEFAULT 0,
     calculated_quantity INT DEFAULT 0,
-    status ENUM('unassigned','active','inactive')
-    DEFAULT 'unassigned',
+    status ENUM('unassigned','active','inactive') DEFAULT 'unassigned',
     last_seen DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (variant_id)
-    REFERENCES variants(id)
-    ON DELETE SET NULL
-);
+    FOREIGN KEY (variant_id) REFERENCES variants(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
 
-CREATE TABLE load_cell_logs (
+-- 13. Load Cell Logs
+CREATE TABLE IF NOT EXISTS load_cell_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     load_cell_id INT NOT NULL,
     weight DECIMAL(10,2) NOT NULL,
     quantity INT NOT NULL,
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (load_cell_id)
-    REFERENCES load_cells(id)
-    ON DELETE CASCADE
-);
+    FOREIGN KEY (load_cell_id) REFERENCES load_cells(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
 
-
+-- 14. Orders
 CREATE TABLE IF NOT EXISTS orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=InnoDB;
 
-
+-- 15. Order Items
 CREATE TABLE IF NOT EXISTS order_items (
   id INT AUTO_INCREMENT PRIMARY KEY,
   order_id INT NOT NULL,
@@ -205,9 +207,9 @@ CREATE TABLE IF NOT EXISTS order_items (
   quantity INT NOT NULL,
   FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
   FOREIGN KEY (variant_id) REFERENCES variants(id)
-);
+) ENGINE=InnoDB;
 
--- Rule-based Operational Insights
+-- 16. Rule-based Operational Insights
 CREATE TABLE IF NOT EXISTS rule_insights (
     id INT AUTO_INCREMENT PRIMARY KEY,
     rule_id VARCHAR(20) NOT NULL,
@@ -220,7 +222,8 @@ CREATE TABLE IF NOT EXISTS rule_insights (
         REFERENCES variants(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-CREATE TABLE hourly_rate (
+-- 17. Hourly Rate
+CREATE TABLE IF NOT EXISTS hourly_rate (
     id INT AUTO_INCREMENT PRIMARY KEY,
     userID INT NOT NULL,
     rate DECIMAL(10,2) NOT NULL,          
@@ -228,3 +231,5 @@ CREATE TABLE hourly_rate (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userID) REFERENCES user(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+SET FOREIGN_KEY_CHECKS = 1; -- Turns safety constraint checking back on
