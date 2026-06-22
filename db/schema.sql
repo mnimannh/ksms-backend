@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS variants (
     barcode VARCHAR(50) UNIQUE NOT NULL,
     threshold INT DEFAULT 10,
     stock_tracking_type ENUM('manual','load_cell') DEFAULT 'manual',
+    unit_weight DECIMAL(10,2) DEFAULT NULL,
     lastUpdated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_variants_inventory FOREIGN KEY (inventory_id)
         REFERENCES inventory(id) ON DELETE CASCADE

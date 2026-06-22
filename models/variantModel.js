@@ -4,7 +4,7 @@ import db from '../db/connection.js';
 // Fetch all variants
 export const getAllVariants = async () => {
   const [rows] = await db.query(`
-    SELECT v.id, v.variant_name, v.quantity, v.cost_price, v.price, v.barcode, v.threshold, v.lastUpdated, v.inventory_id, i.inventoryName
+    SELECT v.id, v.variant_name, v.quantity, v.cost_price, v.price, v.barcode, v.threshold, v.stock_tracking_type, v.unit_weight, v.lastUpdated, v.inventory_id, i.inventoryName
     FROM variants v
     JOIN inventory i ON v.inventory_id = i.id
   `);
@@ -31,20 +31,20 @@ export const getVariantByBarcode = async (barcode) => {
 
 // Create a variant
 export const createVariant = async (data) => {
-  const { inventory_id, variant_name, quantity, cost_price, price, barcode, threshold } = data;
+  const { inventory_id, variant_name, quantity, cost_price, price, barcode, threshold, unit_weight } = data;
   const [result] = await db.query(
-    'INSERT INTO variants (inventory_id, variant_name, quantity, cost_price, price, barcode, threshold) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [inventory_id, variant_name, quantity || 0, cost_price || 0, price, barcode, threshold ?? 10]
+    'INSERT INTO variants (inventory_id, variant_name, quantity, cost_price, price, barcode, threshold, unit_weight) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [inventory_id, variant_name, quantity || 0, cost_price || 0, price, barcode, threshold ?? 10, unit_weight || null]
   );
   return result.insertId;
 };
 
 // Update a variant
 export const updateVariant = async (id, data) => {
-  const { inventory_id, variant_name, quantity, cost_price, price, barcode, threshold } = data;
+  const { inventory_id, variant_name, quantity, cost_price, price, barcode, threshold, unit_weight } = data;
   await db.query(
-    'UPDATE variants SET inventory_id = ?, variant_name = ?, quantity = ?, cost_price = ?, price = ?, barcode = ?, threshold = ? WHERE id = ?',
-    [inventory_id, variant_name, quantity, cost_price ?? 0, price, barcode, threshold, id]
+    'UPDATE variants SET inventory_id = ?, variant_name = ?, quantity = ?, cost_price = ?, price = ?, barcode = ?, threshold = ?, unit_weight = ? WHERE id = ?',
+    [inventory_id, variant_name, quantity, cost_price ?? 0, price, barcode, threshold, unit_weight || null, id]
   );
 };
 

@@ -21,6 +21,7 @@ import inventoryReportRoutes from './routes/inventoryReportRoutes.js'
 import shiftPayrollReportRoutes from './routes/shiftPayrollReportRoutes.js'
 import analyticsRoutes from './routes/analyticsRoutes.js'
 import hourlyRateRoutes from './routes/hourlyRateRoutes.js'
+import loadCellRoutes from './routes/loadCellRoutes.js'
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use('/api/reports/inventory', inventoryReportRoutes)
 app.use('/api/reports/shift-payroll', shiftPayrollReportRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/hourly-rates', hourlyRateRoutes)
+app.use('/api/load-cells', loadCellRoutes)
 
 // Test route
 app.get('/', (req, res) => res.send('KSMS Backend is running'));
