@@ -11,6 +11,7 @@ export const getAllLoadCells = async () => {
            v.quantity AS variant_quantity,
            v.threshold AS variant_threshold,
            v.barcode AS variant_barcode,
+           v.unit_weight AS variant_unit_weight,
            i.inventoryName AS product_name
     FROM load_cells lc
     LEFT JOIN variants v ON lc.variant_id = v.id
@@ -30,6 +31,7 @@ export const getLoadCellById = async (id) => {
            v.quantity AS variant_quantity,
            v.threshold AS variant_threshold,
            v.barcode AS variant_barcode,
+           v.unit_weight AS variant_unit_weight,
            i.inventoryName AS product_name
     FROM load_cells lc
     LEFT JOIN variants v ON lc.variant_id = v.id
@@ -146,8 +148,17 @@ export const unassignVariant = async (id) => {
  */
 export const recordWeight = async (sensorUid, weight) => {
   // 1. Look up the sensor
-  const sensor = await getLoadCellBySensorUid(sensorUid);
-  if (!sensor) return null;
+  let sensor = await getLoadCellBySensorUid(sensorUid);
+  
+  // 1a. Auto-provision if it doesn't exist
+  if (!sensor) {
+    await db.query(
+      `INSERT INTO load_cells (sensor_uid, status, empty_weight, unit_weight)
+       VALUES (?, 'unassigned', 0, 0)`,
+      [sensorUid]
+    );
+    sensor = await getLoadCellBySensorUid(sensorUid);
+  }
   if (!sensor.variant_id) return { error: 'Sensor not assigned to any variant' };
 
   // 1b. Get the variant's unit_weight (preferred) or fall back to the load cell's
@@ -163,7 +174,7 @@ export const recordWeight = async (sensorUid, weight) => {
   // 2. Calculate quantity
   let calculatedQty = 0;
   if (unitWeight > 0) {
-    calculatedQty = Math.max(0, Math.floor((weight - emptyWeight) / unitWeight));
+    calculatedQty = Math.max(0, Math.round((weight - emptyWeight) / unitWeight));
   }
 
   // 3. Update load cell record
@@ -218,7 +229,7 @@ export const getLoadCellLogs = async (loadCellId, limit = 50) => {
  */
 export const getAvailableVariants = async () => {
   const [rows] = await db.query(`
-    SELECT v.id, v.variant_name, v.barcode, v.quantity, v.threshold,
+    SELECT v.id, v.variant_name, v.barcode, v.quantity, v.threshold, v.unit_weight,
            i.inventoryName AS product_name
     FROM variants v
     JOIN inventory i ON v.inventory_id = i.id

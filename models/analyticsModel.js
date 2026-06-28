@@ -60,6 +60,15 @@ export const insightExists = async (ruleId, variantId) => {
   return rows.length > 0;
 };
 
+// Check if an insight already exists for this rule + variant within X days
+export const insightExistsWithinDays = async (ruleId, variantId, days) => {
+  const [rows] = await db.query(
+    'SELECT id FROM rule_insights WHERE rule_id = ? AND variant_id = ? AND created_at >= NOW() - INTERVAL ? DAY',
+    [ruleId, variantId, days]
+  );
+  return rows.length > 0;
+};
+
 export const insertInsight = async (ruleId, variantId, message, severity) => {
   await db.query(
     'INSERT INTO rule_insights (rule_id, variant_id, message, severity) VALUES (?, ?, ?, ?)',

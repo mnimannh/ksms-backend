@@ -138,13 +138,16 @@ export const unassignVariant = async (req, res) => {
 export const recordReading = async (req, res) => {
   try {
     const { sensorUid } = req.params;
-    const { weight } = req.body;
+    let { weight } = req.body;
 
     if (weight === undefined || weight === null) {
       return res.status(400).json({ message: 'weight is required' });
     }
 
-    const result = await loadCellModel.recordWeight(sensorUid, parseFloat(weight));
+    weight = parseFloat(weight);
+    if (weight < 0) weight = 0.0;
+
+    const result = await loadCellModel.recordWeight(sensorUid, weight);
 
     if (!result) {
       return res.status(404).json({ message: 'Sensor not found' });
